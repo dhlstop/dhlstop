@@ -208,7 +208,7 @@
     <!-- Modal for Name Input -->
     <div id="name-input-modal" class="modal show">
         <div class="modal-content">
-            <h3 class="modal-title">¡Bienvenido al Juego STOP!</h3>
+            <h3 class="modal-title">¡Bienvenido al Juego STOP de DHL!</h3>
             <p class="modal-message">Por favor, ingresa tu nombre y apellido para comenzar.</p>
             <input type="text" id="player-name-input" placeholder="Nombre" class="mb-3">
             <input type="text" id="player-surname-input" placeholder="Apellido" class="mb-5">
@@ -249,12 +249,36 @@
             modalElement.classList.remove('show');
         }
 
-        function showMessage(title, message) {
+        /**
+         * Displays a message in the general game modal.
+         * @param {string} title - The title of the modal.
+         * @param {string} message - The message content.
+         * @param {boolean} isFinalRoundModal - True if this is the modal for the final round's results, to change button behavior.
+         */
+        function showMessage(title, message, isFinalRoundModal = false) {
             modalTitle.textContent = title;
             modalMessage.innerHTML = message;
             showModal(gameModal);
+            // Disable main game buttons while a modal is open
             restartBtn.disabled = true;
             startRoundBtn.disabled = true;
+
+            // Dynamically set the close button text and behavior for gameModal
+            if (isFinalRoundModal) {
+                modalCloseBtn.textContent = "Ver Resultados Finales";
+                modalCloseBtn.onclick = () => {
+                    hideModal(gameModal);
+                    endGame(); // Call endGame when this specific button is clicked
+                };
+            } else {
+                modalCloseBtn.textContent = "Cerrar";
+                modalCloseBtn.onclick = () => {
+                    hideModal(gameModal);
+                    // Re-enable main game buttons after closing if not the final round
+                    startRoundBtn.disabled = false;
+                    restartBtn.disabled = false;
+                };
+            }
         }
 
         function clearAllInputs() {
@@ -275,104 +299,13 @@
             });
         }
 
-        // --- Category Validation Data ---
-        const validationLists = {
-            "País o Capital": [
-                "AFGANISTAN", "KABUL", "ALBANIA", "TIRANA", "ALEMANIA", "BERLIN", "ANDORRA", "ANDORRA LA VIEJA",
-                "ANGOLA", "LUANDA", "ANTIGUA Y BARBUDA", "SAINT JOHN'S", "ARABIA SAUDITA", "RIAD",
-                "ARGELIA", "ARGEL", "ARGENTINA", "BUENOS AIRES", "ARMENIA", "EREVAN", "AUSTRALIA", "CANBERRA",
-                "AUSTRIA", "VIENA", "AZERBAIYAN", "BAKU", "BAHAMAS", "NASSAU", "BAHREIN", "MANAMA",
-                "BANGLADESH", "DACCA", "BARBADOS", "BRIDGETOWN", "BELGICA", "BRUSELAS", "BELICE", "BELMOPAN",
-                "BENIN", "PORTO NOVO", "BIELORRUSIA", "MINSK", "BIRMANIA", "NAYPYIDAW", "BOLIVIA", "SUCRE",
-                "BOSNIA Y HERZEGOVINA", "SARAJEVO", "BOTSUANA", "GABORONE", "BRASIL", "BRASILIA",
-                "BRUNEI", "BANDAR SERI BEGAWAN", "BULGARIA", "SOFIA", "BURKINA FASO", "OUAGADOUGOU",
-                "BURUNDI", "GUITEGA", "CABO VERDE", "PRAIA", "CAMBOYA", "NOM PEN", "CAMERUN", "YAUNDE",
-                "CANADA", "OTTAWA", "CHAD", "NDJAMENA", "CHILE", "SANTIAGO", "CHINA", "PEKIN",
-                "CHIPRE", "NICOSIA", "COLOMBIA", "BOGOTA", "COMORAS", "MORONI", "CONGO", "BRAZZAVILLE",
-                "COREA DEL NORTE", "PYONGYANG", "COREA DEL SUR", "SEUL", "COSTA DE MARFIL", "YAMOUSSOUKRO",
-                "COSTA RICA", "SAN JOSE", "CROACIA", "ZAGREB", "CUBA", "LA HABANA", "DINAMARCA", "COPENHAGUE",
-                "DJIBOUTI", "DJIBOUTI", "DOMINICA", "ROSEAU", "ECUADOR", "QUITO", "EGIPTO", "EL CAIRO",
-                "EL SALVADOR", "SAN SALVADOR", "EMIRATOS ARABES UNIDOS", "ABU DHABI", "ERITREA", "ASMARA",
-                "ESLOVAQUIA", "BRATISLAVA", "ESLOVENIA", "LIUBLIANA", "ESPAÑA", "MADRID", "ESTADOS UNIDOS", "WASHINGTON",
-                "ESTONIA", "TALLIN", "ETIOPIA", "ADDIS ABEBA", "FIJI", "SUVA", "FILIPINAS", "MANILA",
-                "FINLANDIA", "HELSINKI", "FRANCIA", "PARIS", "GABON", "LIBREVILLE", "GAMBIA", "BANJUL",
-                "GEORGIA", "TBILISI", "GHANA", "ACCRA", "GRECIA", "ATENAS", "GRANADA", "SAINT GEORGE'S",
-                "GUATEMALA", "CIUDAD DE GUATEMALA", "GUINEA", "CONAKRY", "GUINEA BISSAU", "BISSAU",
-                "GUINEA ECUATORIAL", "MALABO", "GUYANA", "GEORGETOWN", "HAITI", "PUERTO PRINCIPE",
-                "HONDURAS", "TEGUCIGALPA", "HUNGRIA", "BUDAPEST", "INDIA", "NUEVA DELHI", "INDONESIA", "YAKARTA",
-                "IRAK", "BAGDAD", "IRAN", "TEHERAN", "IRLANDA", "DUBLIN", "ISLANDIA", "REYKJAVIK",
-                "ISLAS MARSHALL", "MAJURO", "ISLAS SALOMON", "HONIARA", "ISRAEL", "JERUSALEN", "ITALIA", "ROMA",
-                "JAMAICA", "KINGSTON", "JAPON", "TOKIO", "JORDANIA", "AMMAN", "KAZAJISTAN", "NUR SULTAN",
-                "KENIA", "NAIROBI", "KIRGUISTAN", "BISHKEK", "KIRIBATI", "TARAWA", "KOSOVO", "PRISTINA",
-                "KUWAIT", "CIUDAD DE KUWAIT", "LAOS", "VIENTIANE", "LESOTHO", "MASERU", "LETONIA", "RIGA",
-                "LIBANO", "BEIRUT", "LIBERIA", "MONROVIA", "LIBIA", "TRIPOLI", "LIECHTENSTEIN", "VADUZ",
-                "LITUANIA", "VILNA", "LUXEMBURGO", "LUXEMBURGO", "MACEDONIA DEL NORTE", "SKOPJE",
-                "MADAGASCAR", "ANTANANARIVO", "MALASIA", "KUALA LUMPUR", "MALAWI", "LILONGWE", "MALDIVAS", "MALE",
-                "MALI", "BAMAKO", "MALTA", "LA VALETA", "MARRUECOS", "RABAT", "MAURICIO", "PORT LOUIS",
-                "MAURITANIA", "NOUAKCHOTT", "MEXICO", "CIUDAD DE MEXICO", "MICRONESIA", "PALIKIR",
-                "MOLDAVIA", "CHISINAU", "MONACO", "MONACO", "MONGOLIA", "ULAN BATOR", "MONTENEGRO", "PODGORICA",
-                "MOZAMBIQUE", "MAPUTO", "NAMIBIA", "WINDHOEK", "NAURU", "YAREN", "NEPAL", "KATMANDU",
-                "NICARAGUA", "MANAGUA", "NIGER", "NIAMEY", "NIGERIA", "ABUJA", "NORUEGA", "OSLO",
-                "NUEVA ZELANDA", "WELLINGTON", "OMAN", "MASCATE", "PAISES BAJOS", "AMSTERDAM", "PAKISTAN", "ISLAMABAD",
-                "PALAOS", "NGERULMUD", "PANAMA", "CIUDAD DE PANAMA", "PAPUA NUEVA GUINEA", "PORT MORESBY",
-                "PARAGUAY", "ASUNCION", "PERU", "LIMA", "POLONIA", "VARSOVIA", "PORTUGAL", "LISBOA",
-                "QATAR", "DOHA", "REINO UNIDO", "LONDRES", "REPUBLICA CENTROAFRICANA", "BANGUI",
-                "REPUBLICA CHECA", "PRAGA", "REPUBLICA DEMOCRATICA DEL CONGO", "KINSHASA",
-                "REPUBLICA DOMINICANA", "SANTO DOMINGO", "RUANDA", "KIGALI", "RUMANIA", "BUCAREST",
-                "RUSIA", "MOSCU", "SAMOA", "APIA", "SAN MARINO", "SAN MARINO", "SANTO TOME Y PRINCIPE", "SANTO TOME",
-                "SENEGAL", "DAKAR", "SERBIA", "BELGRADO", "SEYCHELLES", "VICTORIA", "SIERRA LEONA", "FREETOWN",
-                "SINGAPUR", "SINGAPUR", "SIRIA", "DAMASCO", "SOMALIA", "MOGADISCIO", "SRI LANKA", "SRI JAYAWARDENEPURA KOTTE",
-                "SUDAFRICA", "PRETORIA", "SUDAN", "JARTUM", "SUDAN DEL SUR", "JUBA", "SUECIA", "ESTOCOLMO",
-                "SUIZA", "BERNA", "SURINAM", "PARAMARIBO", "TAILANDIA", "BANGKOK", "TANZANIA", "DODOMA",
-                "TAYIKISTAN", "DUSHANBE", "TIMOR ORIENTAL", "DILI", "TOGO", "LOME", "TONGA", "NUKU'ALOFA",
-                "TRINIDAD Y TOBAGO", "PUERTO ESPAÑA", "TUNEZ", "TUNEZ", "TURKMENISTAN", "ASHGABAT",
-                "TURQUIA", "ANKARA", "TUVALU", "FUNAFUTI", "UCRANIA", "KIEV", "UGANDA", "KAMPALA",
-                "URUGUAY", "MONTEVIDEO", "UZBEKISTAN", "TASHKENT", "VANUATU", "PORT VILA",
-                "VENEZUELA", "CARACAS", "VIETNAM", "HANOI", "YEMEN", "SANA", "ZAMBIA", "LUSAKA",
-                "ZIMBABUE", "HARARE"
-            ],
-            "Parte del Cuerpo": [
-                "PIERNA", "PULGAR", "PELO", "PECHO", "RODILLA", "ROSTRO", "MANO", "MUÑECA", "LABIO",
-                "LENGUA", "BRAZO", "BOCA", "CABEZA", "CUELLO", "CARA", "DEDO", "DIENTE", "ESPALDA",
-                "ESTOMAGO", "FRENTE", "GARGANTA", "HOMBRO", "HIGADO", "OJO", "OREJA", "NARIZ", "PIE",
-                "UÑA", "TOBILLO", "CADERA", "CEJA", "CEREBRO", "CORAZON", "CODO", "FOSAS", "GLUTEOS",
-                "INGLES", "MEJILLA", "MUSLO", "NUDILLO", "OMBLIGO", "PANTORRILLA", "PESTAÑA", "PUPILA",
-                "RIÑON", "SALIVA", "TALON", "TENDON", "TRAQUEA", "VENA", "ARTERIA", "COSTILLA", "CRANEO",
-                "DIENTES", "ESQUELETO", "ESTOMAGO", "FALANGE", "GLANDULA", "HUESO", "INTESTINO", "LIGAMENTO",
-                "MUSCULO", "NERVIO", "PULMON", "ROTULA", "TIBIA", "VERTEBRA"
-            ],
-            "Algo relacionado a DHL": [
-                "PAQUETES", "ENVIOS", "EXPRESS", "PARCEL", "FREIGHT", "SUPPLY CHAIN", "CAJAS", "SOBRES",
-                "ETIQUETAS", "TRACKING", "RASTREO", "APP", "MYBILL", "ON DEMAND DELIVERY", "CAMIONES",
-                "AVIONES", "BICICLETAS", "ECOMMERCE", "VMI", "CUSTOMS", "LOGO", "ESLOGAN", "PUBLICIDAD",
-                "PATROCINIOS", "VOLUNTEER DAY", "TRABAJADORES", "UNIFORME", "CENTROS", "DISTRIBUCION",
-                "ALMACENES", "HUBS", "MENSAJERIA", "LOGISTICA", "CARGA", "URGENTE", "INTERNACIONAL",
-                "NACIONAL", "EMBALAJE", "CINTA", "CODIGO DE BARRAS", "ENTREGA", "RECOGIDA", "SEGUIMIENTO",
-                "FIRMA", "DOCUMENTOS", "PALETS", "CONTENEDORES", "ADUANAS", "TARIFAS", "FACTURACION",
-                "CERTIFICADO", "SEGURO", "FRAGIL", "PRIORITARIO", "SAME DAY", "NEXT DAY", "WAREHOUSE",
-                "REPARTO", "COURIER", "POSTVENTA", "SOPORTE", "SMS", "NOTIFICACIONES", "GPS", "FLOTA",
-                "ECOLOGICO", "SOSTENIBILIDAD", "DIGITAL", "AUTOMATION", "ROBOTS", "DRONES", "LOCKERS",
-                "PUNTOS DE SERVICIO", "OFICINAS", "CHATBOT", "API", "INTEGRACION", "DEVOLUCIONES",
-                "REEMBOLSOS", "CUSTOMER SERVICE"
-            ]
-        };
-
-        function isValidForCategory(answer, category) {
-            const normalizedAnswer = answer.toUpperCase();
-
-            if (validationLists[category]) {
-                return validationLists[category].includes(normalizedAnswer);
-            }
-            return true;
-        }
-
-        // Game configuration
+        // --- Game configuration ---
         const categories = ["Fruta", "País o Capital", "Parte del Cuerpo", "Algo relacionado a DHL", "Marca"];
         const numParticipants = 1;
         const totalRounds = 3;
         const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-        // Game state variables
+        // --- Game state variables ---
         let currentRound = 0;
         let currentLetter = '';
         let gameStarted = false;
@@ -382,9 +315,9 @@
         let playerName = "Jugador";
         let playerSurname = "";
         let roundStartTime; // To track when the round started for time calculation
-        let usedLetters = []; // New array to store used letters
+        let usedLetters = []; // Array to store used letters to prevent repetition
 
-        // DOM elements
+        // --- DOM elements ---
         const roundCounterEl = document.getElementById('round-counter');
         const currentLetterEl = document.getElementById('current-letter');
         const startRoundBtn = document.getElementById('start-round-btn');
@@ -397,7 +330,6 @@
         const modalMessage = document.getElementById('modal-message');
         const modalCloseBtn = document.getElementById('modal-close-btn');
 
-        // Name Input Modal elements
         const nameInputModal = document.getElementById('name-input-modal');
         const playerNameInput = document.getElementById('player-name-input');
         const playerSurnameInput = document.getElementById('player-surname-input');
@@ -405,14 +337,12 @@
         const playerHeaderEl = document.getElementById('player-header');
         const nameInputErrorMessage = document.getElementById('name-input-error-message');
 
-        // Letter Input Modal elements
         const letterInputModal = document.getElementById('letter-input-modal');
         const roundNumberLetterModal = document.getElementById('round-number-letter-modal');
         const letterInput = document.getElementById('letter-input');
-        const letterInputErrorMessage = document.getElementById('letter-input-error-message'); // New error message element
+        const letterInputErrorMessage = document.getElementById('letter-input-error-message');
         const submitLetterBtn = document.getElementById('submit-letter-btn');
 
-        // Final Results Modal elements
         const finalResultsModal = document.getElementById('final-results-modal');
         const finalModalTitle = document.getElementById('final-modal-title');
         const finalModalScore = document.getElementById('final-modal-score');
@@ -432,9 +362,12 @@
             usedLetters = []; // Initialize used letters
             renderGameInputs();
             updateScoreboard();
-            resetGameUI();
+            resetGameUI(); // Calls resetGameUI to set initial state and show name input modal
         }
 
+        /**
+         * Resets the game UI and state to its initial conditions.
+         */
         function resetGameUI() {
             currentRound = 0;
             currentLetter = '?';
@@ -447,9 +380,9 @@
             stopBtn.disabled = true;
             clearAllInputs();
             disableAllInputs();
-            playerName = "Jugador";
-            playerSurname = "";
-            playerHeaderEl.textContent = "Jugador";
+            playerName = "Jugador"; // Reset player name
+            playerSurname = ""; // Reset player surname
+            playerHeaderEl.textContent = "Jugador"; // Reset header
             scores = [{
                 participantId: 0,
                 total: 0,
@@ -458,18 +391,21 @@
             }];
             usedLetters = []; // Reset used letters on full game restart
             updateScoreboard();
+            // Hide all modals to ensure a clean start
             hideModal(gameModal);
             hideModal(letterInputModal);
             hideModal(finalResultsModal);
-            showModal(nameInputModal);
-            playerNameInput.value = "";
-            playerSurnameInput.value = "";
-            letterInput.value = "";
-            nameInputErrorMessage.textContent = "";
-            letterInputErrorMessage.textContent = ""; // Clear letter error message
+            showModal(nameInputModal); // Show name input modal to start a new game
+            playerNameInput.value = ""; // Clear name input
+            playerSurnameInput.value = ""; // Clear surname input
+            letterInput.value = ""; // Clear letter input
+            nameInputErrorMessage.textContent = ""; // Clear error messages
+            letterInputErrorMessage.textContent = "";
         }
 
-        // --- Rendering Functions ---
+        /**
+         * Renders the input fields for each category.
+         */
         function renderGameInputs() {
             gameInputsEl.innerHTML = '';
 
@@ -491,7 +427,7 @@
                 input.placeholder = `Tu respuesta`;
                 input.dataset.category = category;
                 input.dataset.participantId = 0;
-                input.disabled = true;
+                input.disabled = true; // Inputs are disabled until a round starts
                 inputCell.appendChild(input);
                 row.appendChild(inputCell);
 
@@ -499,6 +435,9 @@
             });
         }
 
+        /**
+         * Updates the scoreboard with current scores and times.
+         */
         function updateScoreboard() {
             scoreboardEl.innerHTML = '';
 
@@ -511,6 +450,7 @@
             nameCell.textContent = `${playerName} ${playerSurname}`;
             row.appendChild(nameCell);
 
+            // Add cells for each round's score
             for (let i = 0; i < totalRounds; i++) {
                 const roundScoreCell = document.createElement('td');
                 roundScoreCell.classList.add('py-3', 'px-6', 'text-center', 'font-bold');
@@ -527,6 +467,10 @@
         }
 
         // --- Game Flow Functions ---
+
+        /**
+         * Starts a new game after player name input.
+         */
         function startGame() {
             const name = playerNameInput.value.trim();
             const surname = playerSurnameInput.value.trim();
@@ -543,14 +487,18 @@
             hideModal(nameInputModal);
 
             gameStarted = true;
+            // Reset scores and used letters for a fresh game
             scores[0].total = 0;
             scores[0].roundScores = Array(totalRounds).fill(0);
             scores[0].timeTakenPerRound = Array(totalRounds).fill('00:00');
-            usedLetters = []; // Ensure used letters is reset for a new game
+            usedLetters = [];
             updateScoreboard();
-            promptForLetter();
+            promptForLetter(); // Prompt for the first letter
         }
 
+        /**
+         * Shows the modal to prompt the user for a letter for the current round.
+         */
         function promptForLetter() {
             roundNumberLetterModal.textContent = currentRound + 1;
             letterInput.value = "";
@@ -558,30 +506,39 @@
             showModal(letterInputModal);
         }
 
+        /**
+         * Handles the submission of the letter for the round.
+         * Validates the letter and starts the round if valid.
+         */
         function submitLetter() {
             const letter = letterInput.value.trim().toUpperCase();
 
+            // Validate if it's a single alphabet character
             if (letter.length !== 1 || !/^[A-Z]$/.test(letter)) {
                 letterInputErrorMessage.textContent = "Por favor, ingresa una sola letra válida del alfabeto.";
                 return;
             }
 
+            // Check if the letter has already been used
             if (usedLetters.includes(letter)) {
                 letterInputErrorMessage.textContent = `La letra "${letter}" ya ha sido utilizada. Elige otra.`;
                 return;
             }
 
             letterInputErrorMessage.textContent = ""; // Clear error if valid
-            usedLetters.push(letter); // Add to used letters
+            usedLetters.push(letter); // Add to used letters array
             currentLetter = letter;
             hideModal(letterInputModal);
             startRound();
         }
 
+        /**
+         * Starts a new round of the game.
+         */
         function startRound() {
             currentRound++;
+            // This check is a safeguard; normal flow should prevent going beyond totalRounds here
             if (currentRound > totalRounds) {
-                // This should ideally not be reached if game ends correctly after 3 rounds
                 endGame();
                 return;
             }
@@ -599,46 +556,47 @@
 
             updateScoreboard();
 
+            // Reset round answers (though not strictly necessary for single player, good practice)
             roundAnswers = {};
             categories.forEach(cat => roundAnswers[cat] = {});
 
-            roundStartTime = Date.now();
+            roundStartTime = Date.now(); // Record the start time of the round
 
-            showMessage(`¡Ronda ${currentRound}!`, `La letra es: "${currentLetter}". ¡Comienza a escribir!`);
+            // Show initial round message
+            showMessage(`¡Ronda ${currentRound}!`, `La letra es: "${currentLetter}". ¡Comienza a escribir!`, false);
         }
 
+        /**
+         * Stops the current round, calculates time taken, and prepares for scoring.
+         */
         function stopGame() {
+            // Prevent multiple calls if already stopped or frozen
             if (!roundActive && !inputsFrozen) return;
 
-            const timeElapsedMs = Date.now() - roundStartTime;
+            const timeElapsedMs = Date.now() - roundStartTime; // Calculate time spent in milliseconds
             const totalSeconds = Math.floor(timeElapsedMs / 1000);
             const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
             const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            // Store the time taken for the current round
             scores[0].timeTakenPerRound[currentRound - 1] = `${minutes}:${seconds}`;
 
             inputsFrozen = true;
             roundActive = false;
             stopBtn.disabled = true;
-            disableAllInputs();
+            disableAllInputs(); // Disable inputs once STOP is pressed
 
-            showMessage("¡STOP!", "Calculando puntos de la ronda...");
+            showMessage("¡STOP!", "Calculando puntos de la ronda...", false); // Show calculating message
 
+            // Delay calculation to allow user to see "Calculating points..." message
             setTimeout(() => {
                 calculateRoundScores();
                 updateScoreboard();
-                // If it's the last round, show the final results modal immediately after round scores are calculated
-                if (currentRound === totalRounds) {
-                    // Hide the current game modal first, then show the final results modal
-                    hideModal(gameModal);
-                    endGame();
-                } else {
-                    // If not the last round, re-enable buttons for next round
-                    startRoundBtn.disabled = false;
-                    restartBtn.disabled = false;
-                }
             }, 1500);
         }
 
+        /**
+         * Calculates scores for the current round based on answers.
+         */
         function calculateRoundScores() {
             const inputFields = document.querySelectorAll('.input-field');
             let roundScore = 0;
@@ -654,27 +612,28 @@
                 const startsWithCorrectLetter = answer && answer.startsWith(currentLetter);
 
                 if (startsWithCorrectLetter) {
-                    if (isValidForCategory(answer, category)) {
-                        points = 10;
-                        status = '10 pts (Única)';
-                    } else {
-                        status = '0 pts (No aplica a la categoría)';
-                    }
+                    // As per the requirement, any non-empty answer starting with the correct letter is valid.
+                    points = 10;
+                    status = '10 pts (Válido)'; // Status message for valid answers
+                } else {
+                    status = '0 pts (No comienza con la letra correcta o vacío)'; // Status message for invalid answers
                 }
                 roundScore += points;
                 roundSummary += `<p>${answer || 'Vacío'}: ${status}</p>`;
             });
 
-            scores[0].roundScores[currentRound - 1] = roundScore;
-            scores[0].total += roundScore;
+            scores[0].roundScores[currentRound - 1] = roundScore; // Store current round's score
+            scores[0].total += roundScore; // Add to total score
 
-            modalTitle.textContent = `Resultados Ronda ${currentRound}`;
-            modalMessage.innerHTML = roundSummary;
-            showModal(gameModal);
+            // Show round results modal. If it's the last round, set button to trigger endGame.
+            showMessage(`Resultados Ronda ${currentRound}`, roundSummary, currentRound === totalRounds);
 
-            updateScoreboard();
+            updateScoreboard(); // Update scoreboard with current round's score
         }
 
+        /**
+         * Ends the game, displays final results, and the DHL message.
+         */
         function endGame() {
             gameStarted = false;
             stopBtn.disabled = true;
@@ -692,7 +651,7 @@
             finalModalRoundTimes.innerHTML = roundTimesHtml;
 
             dhlTeamMessage.innerHTML = `En DHL, cada entrega es un esfuerzo de equipo. ¡Tu dedicación en este juego refleja el espíritu de excelencia que nos impulsa! ¡Gracias por ser parte de nuestro equipo!`;
-            showModal(finalResultsModal);
+            showModal(finalResultsModal); // Show the final results modal
 
             // The final modal's close button will just hide the modal, not reset the game
             finalModalCloseBtn.onclick = () => {
@@ -706,12 +665,8 @@
         stopBtn.addEventListener('click', stopGame);
         restartBtn.addEventListener('click', resetGameUI); // This button explicitly restarts the game
 
-        // The modalCloseBtn listener now only hides the game modal.
-        // The endGame call for the last round is handled directly in stopGame.
-        modalCloseBtn.addEventListener('click', () => {
-            hideModal(gameModal);
-            // Buttons are enabled in stopGame or endGame
-        });
+        // The modalCloseBtn.addEventListener is now handled dynamically within showMessage.
+        // No need for a static listener here anymore.
 
         startGameBtnModal.addEventListener('click', startGame);
         submitLetterBtn.addEventListener('click', submitLetter);
