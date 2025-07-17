@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego STOP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f0f0; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top to allow scrolling */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .dhl-yellow {
+            background-color: #FFCC00; /* DHL Yellow */
+            color: #333;
+        }
+        .dhl-red {
+            background-color: #CC0000; /* DHL Red */
+            color: #fff;
+        }
+        .text-dhl-red {
+            color: #CC0000; /* DHL Red text color */
+        }
+        /* Updated button styles */
+        .btn-primary, .btn-secondary, .modal-button {
+            @apply px-6 py-3 rounded-lg font-bold transition-all duration-300 ease-in-out shadow-md;
+            background-color: #FFCC00; /* DHL Yellow */
+            color: #CC0000; /* DHL Red */
+            border: 2px solid #CC0000; /* Red border */
+        }
+        .btn-primary:hover, .btn-secondary:hover, .modal-button:hover {
+            background-color: #CC0000; /* DHL Red on hover */
+            color: #FFCC00; /* DHL Yellow text on hover */
+            border-color: #FFCC00; /* Yellow border on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow change */
+        }
+
+        /* Updated input[type="text"] styles for red border and red text */
+        input[type="text"] {
+            @apply p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-dhl-red;
+            width: 100%;
+            box-sizing: border-box;
+            border: 2px solid #CC0000; /* Red border */
+            color: #CC0000; /* Red text color */
+        }
+        input[type="text"]::placeholder {
+            color: rgba(204, 0, 0, 0.7); /* Lighter red for placeholder */
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #CC0000; /* DHL Red */
+        }
+        .modal-message {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        /* Style for the name input modal */
+        #name-input-modal .modal-content,
+        #letter-input-modal .modal-content,
+        #final-results-modal .modal-content { /* Added final-results-modal */
+            padding: 40px;
+        }
+        #name-input-modal input,
+        #letter-input-modal input {
+            margin-bottom: 15px;
+        }
+        #letter-input-modal input {
+            text-align: center;
+            text-transform: uppercase;
+            font-size: 2rem;
+            width: 80px; /* Smaller width for single letter */
+        }
+        #name-input-error-message,
+        #letter-input-error-message { /* Added letter-input-error-message */
+            color: #CC0000; /* DHL Red for error message */
+            font-weight: bold;
+            margin-top: -10px; /* Adjust spacing */
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="container">
+        <!-- DHL Logo as Header -->
+        <div class="flex justify-center mb-6">
+            <img src="logo.png" alt="DHL Logo" class="h-auto max-w-full rounded-lg" style="width: 400px;">
+        </div>
+        <h1 class="text-4xl font-extrabold text-center text-gray-800 mb-6">¡Juego STOP DHL!</h1>
+
+        <!-- Game Info and Controls -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 p-5 rounded-xl dhl-yellow shadow-lg">
+            <div class="text-center md:text-left">
+                <p class="text-lg font-semibold text-gray-700">Ronda: <span id="round-counter" class="text-2xl font-bold text-dhl-red">0 / 3</span></p>
+                <p class="text-lg font-semibold text-gray-700">Letra Actual: <span id="current-letter" class="text-4xl font-extrabold text-dhl-red">?</span></p>
+            </div>
+            <div class="flex gap-4">
+                <button id="start-round-btn" class="btn-primary">Iniciar Ronda</button>
+                <button id="stop-btn" class="btn-secondary" disabled>¡STOP!</button>
+                <button id="restart-btn" class="btn-primary">Volver a Comenzar</button>
+            </div>
+        </div>
+
+        <!-- Categories and Participants Input Grid -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white rounded-xl shadow-lg">
+                <thead>
+                    <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left">Categoría</th>
+                        <th class="py-3 px-6 text-center" colspan="1">Participante</th>
+                    </tr>
+                    <tr class="uppercase text-sm leading-normal">
+                        <th class="py-2 px-4 text-left dhl-yellow text-dhl-red"></th>
+                        <th class="py-2 px-4 text-center dhl-yellow text-dhl-red" id="player-header">Jugador</th>
+                    </tr>
+                </thead>
+                <tbody id="game-inputs" class="text-gray-700 text-sm">
+                    <!-- Input rows will be dynamically generated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Scoreboard -->
+        <div class="p-5 rounded-xl bg-gray-50 shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Marcador</h2>
+            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                <thead>
+                    <tr class="uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left dhl-yellow text-dhl-red">Participante</th>
+                        <th class="py-3 px-6 text-center dhl-yellow text-dhl-red">Ronda 1</th>
+                        <th class="py-3 px-6 text-center dhl-yellow text-dhl-red">Ronda 2</th>
+                        <th class="py-3 px-6 text-center dhl-yellow text-dhl-red">Ronda 3</th>
+                        <th class="py-3 px-6 text-center dhl-yellow text-dhl-red">Puntos Totales</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreboard" class="text-gray-700 text-sm">
+                    <!-- Score rows will be dynamically generated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for general messages (e.g., Round X, STOP!) -->
+    <div id="game-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title" class="modal-title"></h3>
+            <p id="modal-message" class="modal-message"></p>
+            <button id="modal-close-btn" class="modal-button">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal for Name Input -->
+    <div id="name-input-modal" class="modal show">
+        <div class="modal-content">
+            <h3 class="modal-title">¡Bienvenido al Juego STOP!</h3>
+            <p class="modal-message">Por favor, ingresa tu nombre y apellido para comenzar.</p>
+            <input type="text" id="player-name-input" placeholder="Nombre" class="mb-3">
+            <input type="text" id="player-surname-input" placeholder="Apellido" class="mb-5">
+            <div id="name-input-error-message" class="text-dhl-red mb-3"></div>
+            <button id="start-game-btn-modal" class="modal-button">Comenzar Juego</button>
+        </div>
+    </div>
+
+    <!-- Modal for Letter Input -->
+    <div id="letter-input-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Letra para la Ronda <span id="round-number-letter-modal"></span></h3>
+            <p class="modal-message">Ingresa una letra para esta ronda:</p>
+            <input type="text" id="letter-input" maxlength="1" class="mb-3">
+            <div id="letter-input-error-message" class="text-dhl-red mb-3"></div> <!-- New error message div -->
+            <button id="submit-letter-btn" class="modal-button">Confirmar Letra</button>
+        </div>
+    </div>
+
+    <!-- New Modal for Final Results -->
+    <div id="final-results-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="final-modal-title" class="modal-title"></h3>
+            <p id="final-modal-score" class="modal-message"></p>
+            <div id="final-modal-round-times" class="modal-message"></div> <!-- To show round times -->
+            <p id="dhl-team-message" class="modal-message text-dhl-red font-semibold"></p>
+            <button id="final-modal-close-btn" class="modal-button">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Utility Functions ---
+        function showModal(modalElement) {
+            modalElement.classList.add('show');
+        }
+
+        function hideModal(modalElement) {
+            modalElement.classList.remove('show');
+        }
+
+        function showMessage(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.innerHTML = message;
+            showModal(gameModal);
+            restartBtn.disabled = true;
+            startRoundBtn.disabled = true;
+        }
+
+        function clearAllInputs() {
+            document.querySelectorAll('.input-field').forEach(input => {
+                input.value = '';
+            });
+        }
+
+        function enableAllInputs() {
+            document.querySelectorAll('.input-field').forEach(input => {
+                input.disabled = false;
+            });
+        }
+
+        function disableAllInputs() {
+            document.querySelectorAll('.input-field').forEach(input => {
+                input.disabled = true;
+            });
+        }
+
+        // --- Category Validation Data ---
+        const validationLists = {
+            "País o Capital": [
+                "AFGANISTAN", "KABUL", "ALBANIA", "TIRANA", "ALEMANIA", "BERLIN", "ANDORRA", "ANDORRA LA VIEJA",
+                "ANGOLA", "LUANDA", "ANTIGUA Y BARBUDA", "SAINT JOHN'S", "ARABIA SAUDITA", "RIAD",
+                "ARGELIA", "ARGEL", "ARGENTINA", "BUENOS AIRES", "ARMENIA", "EREVAN", "AUSTRALIA", "CANBERRA",
+                "AUSTRIA", "VIENA", "AZERBAIYAN", "BAKU", "BAHAMAS", "NASSAU", "BAHREIN", "MANAMA",
+                "BANGLADESH", "DACCA", "BARBADOS", "BRIDGETOWN", "BELGICA", "BRUSELAS", "BELICE", "BELMOPAN",
+                "BENIN", "PORTO NOVO", "BIELORRUSIA", "MINSK", "BIRMANIA", "NAYPYIDAW", "BOLIVIA", "SUCRE",
+                "BOSNIA Y HERZEGOVINA", "SARAJEVO", "BOTSUANA", "GABORONE", "BRASIL", "BRASILIA",
+                "BRUNEI", "BANDAR SERI BEGAWAN", "BULGARIA", "SOFIA", "BURKINA FASO", "OUAGADOUGOU",
+                "BURUNDI", "GUITEGA", "CABO VERDE", "PRAIA", "CAMBOYA", "NOM PEN", "CAMERUN", "YAUNDE",
+                "CANADA", "OTTAWA", "CHAD", "NDJAMENA", "CHILE", "SANTIAGO", "CHINA", "PEKIN",
+                "CHIPRE", "NICOSIA", "COLOMBIA", "BOGOTA", "COMORAS", "MORONI", "CONGO", "BRAZZAVILLE",
+                "COREA DEL NORTE", "PYONGYANG", "COREA DEL SUR", "SEUL", "COSTA DE MARFIL", "YAMOUSSOUKRO",
+                "COSTA RICA", "SAN JOSE", "CROACIA", "ZAGREB", "CUBA", "LA HABANA", "DINAMARCA", "COPENHAGUE",
+                "DJIBOUTI", "DJIBOUTI", "DOMINICA", "ROSEAU", "ECUADOR", "QUITO", "EGIPTO", "EL CAIRO",
+                "EL SALVADOR", "SAN SALVADOR", "EMIRATOS ARABES UNIDOS", "ABU DHABI", "ERITREA", "ASMARA",
+                "ESLOVAQUIA", "BRATISLAVA", "ESLOVENIA", "LIUBLIANA", "ESPAÑA", "MADRID", "ESTADOS UNIDOS", "WASHINGTON",
+                "ESTONIA", "TALLIN", "ETIOPIA", "ADDIS ABEBA", "FIJI", "SUVA", "FILIPINAS", "MANILA",
+                "FINLANDIA", "HELSINKI", "FRANCIA", "PARIS", "GABON", "LIBREVILLE", "GAMBIA", "BANJUL",
+                "GEORGIA", "TBILISI", "GHANA", "ACCRA", "GRECIA", "ATENAS", "GRANADA", "SAINT GEORGE'S",
+                "GUATEMALA", "CIUDAD DE GUATEMALA", "GUINEA", "CONAKRY", "GUINEA BISSAU", "BISSAU",
+                "GUINEA ECUATORIAL", "MALABO", "GUYANA", "GEORGETOWN", "HAITI", "PUERTO PRINCIPE",
+                "HONDURAS", "TEGUCIGALPA", "HUNGRIA", "BUDAPEST", "INDIA", "NUEVA DELHI", "INDONESIA", "YAKARTA",
+                "IRAK", "BAGDAD", "IRAN", "TEHERAN", "IRLANDA", "DUBLIN", "ISLANDIA", "REYKJAVIK",
+                "ISLAS MARSHALL", "MAJURO", "ISLAS SALOMON", "HONIARA", "ISRAEL", "JERUSALEN", "ITALIA", "ROMA",
+                "JAMAICA", "KINGSTON", "JAPON", "TOKIO", "JORDANIA", "AMMAN", "KAZAJISTAN", "NUR SULTAN",
+                "KENIA", "NAIROBI", "KIRGUISTAN", "BISHKEK", "KIRIBATI", "TARAWA", "KOSOVO", "PRISTINA",
+                "KUWAIT", "CIUDAD DE KUWAIT", "LAOS", "VIENTIANE", "LESOTHO", "MASERU", "LETONIA", "RIGA",
+                "LIBANO", "BEIRUT", "LIBERIA", "MONROVIA", "LIBIA", "TRIPOLI", "LIECHTENSTEIN", "VADUZ",
+                "LITUANIA", "VILNA", "LUXEMBURGO", "LUXEMBURGO", "MACEDONIA DEL NORTE", "SKOPJE",
+                "MADAGASCAR", "ANTANANARIVO", "MALASIA", "KUALA LUMPUR", "MALAWI", "LILONGWE", "MALDIVAS", "MALE",
+                "MALI", "BAMAKO", "MALTA", "LA VALETA", "MARRUECOS", "RABAT", "MAURICIO", "PORT LOUIS",
+                "MAURITANIA", "NOUAKCHOTT", "MEXICO", "CIUDAD DE MEXICO", "MICRONESIA", "PALIKIR",
+                "MOLDAVIA", "CHISINAU", "MONACO", "MONACO", "MONGOLIA", "ULAN BATOR", "MONTENEGRO", "PODGORICA",
+                "MOZAMBIQUE", "MAPUTO", "NAMIBIA", "WINDHOEK", "NAURU", "YAREN", "NEPAL", "KATMANDU",
+                "NICARAGUA", "MANAGUA", "NIGER", "NIAMEY", "NIGERIA", "ABUJA", "NORUEGA", "OSLO",
+                "NUEVA ZELANDA", "WELLINGTON", "OMAN", "MASCATE", "PAISES BAJOS", "AMSTERDAM", "PAKISTAN", "ISLAMABAD",
+                "PALAOS", "NGERULMUD", "PANAMA", "CIUDAD DE PANAMA", "PAPUA NUEVA GUINEA", "PORT MORESBY",
+                "PARAGUAY", "ASUNCION", "PERU", "LIMA", "POLONIA", "VARSOVIA", "PORTUGAL", "LISBOA",
+                "QATAR", "DOHA", "REINO UNIDO", "LONDRES", "REPUBLICA CENTROAFRICANA", "BANGUI",
+                "REPUBLICA CHECA", "PRAGA", "REPUBLICA DEMOCRATICA DEL CONGO", "KINSHASA",
+                "REPUBLICA DOMINICANA", "SANTO DOMINGO", "RUANDA", "KIGALI", "RUMANIA", "BUCAREST",
+                "RUSIA", "MOSCU", "SAMOA", "APIA", "SAN MARINO", "SAN MARINO", "SANTO TOME Y PRINCIPE", "SANTO TOME",
+                "SENEGAL", "DAKAR", "SERBIA", "BELGRADO", "SEYCHELLES", "VICTORIA", "SIERRA LEONA", "FREETOWN",
+                "SINGAPUR", "SINGAPUR", "SIRIA", "DAMASCO", "SOMALIA", "MOGADISCIO", "SRI LANKA", "SRI JAYAWARDENEPURA KOTTE",
+                "SUDAFRICA", "PRETORIA", "SUDAN", "JARTUM", "SUDAN DEL SUR", "JUBA", "SUECIA", "ESTOCOLMO",
+                "SUIZA", "BERNA", "SURINAM", "PARAMARIBO", "TAILANDIA", "BANGKOK", "TANZANIA", "DODOMA",
+                "TAYIKISTAN", "DUSHANBE", "TIMOR ORIENTAL", "DILI", "TOGO", "LOME", "TONGA", "NUKU'ALOFA",
+                "TRINIDAD Y TOBAGO", "PUERTO ESPAÑA", "TUNEZ", "TUNEZ", "TURKMENISTAN", "ASHGABAT",
+                "TURQUIA", "ANKARA", "TUVALU", "FUNAFUTI", "UCRANIA", "KIEV", "UGANDA", "KAMPALA",
+                "URUGUAY", "MONTEVIDEO", "UZBEKISTAN", "TASHKENT", "VANUATU", "PORT VILA",
+                "VENEZUELA", "CARACAS", "VIETNAM", "HANOI", "YEMEN", "SANA", "ZAMBIA", "LUSAKA",
+                "ZIMBABUE", "HARARE"
+            ],
+            "Parte del Cuerpo": [
+                "PIERNA", "PULGAR", "PELO", "PECHO", "RODILLA", "ROSTRO", "MANO", "MUÑECA", "LABIO",
+                "LENGUA", "BRAZO", "BOCA", "CABEZA", "CUELLO", "CARA", "DEDO", "DIENTE", "ESPALDA",
+                "ESTOMAGO", "FRENTE", "GARGANTA", "HOMBRO", "HIGADO", "OJO", "OREJA", "NARIZ", "PIE",
+                "UÑA", "TOBILLO", "CADERA", "CEJA", "CEREBRO", "CORAZON", "CODO", "FOSAS", "GLUTEOS",
+                "INGLES", "MEJILLA", "MUSLO", "NUDILLO", "OMBLIGO", "PANTORRILLA", "PESTAÑA", "PUPILA",
+                "RIÑON", "SALIVA", "TALON", "TENDON", "TRAQUEA", "VENA", "ARTERIA", "COSTILLA", "CRANEO",
+                "DIENTES", "ESQUELETO", "ESTOMAGO", "FALANGE", "GLANDULA", "HUESO", "INTESTINO", "LIGAMENTO",
+                "MUSCULO", "NERVIO", "PULMON", "ROTULA", "TIBIA", "VERTEBRA"
+            ],
+            "Algo relacionado a DHL": [
+                "PAQUETES", "ENVIOS", "EXPRESS", "PARCEL", "FREIGHT", "SUPPLY CHAIN", "CAJAS", "SOBRES",
+                "ETIQUETAS", "TRACKING", "RASTREO", "APP", "MYBILL", "ON DEMAND DELIVERY", "CAMIONES",
+                "AVIONES", "BICICLETAS", "ECOMMERCE", "VMI", "CUSTOMS", "LOGO", "ESLOGAN", "PUBLICIDAD",
+                "PATROCINIOS", "VOLUNTEER DAY", "TRABAJADORES", "UNIFORME", "CENTROS", "DISTRIBUCION",
+                "ALMACENES", "HUBS", "MENSAJERIA", "LOGISTICA", "CARGA", "URGENTE", "INTERNACIONAL",
+                "NACIONAL", "EMBALAJE", "CINTA", "CODIGO DE BARRAS", "ENTREGA", "RECOGIDA", "SEGUIMIENTO",
+                "FIRMA", "DOCUMENTOS", "PALETS", "CONTENEDORES", "ADUANAS", "TARIFAS", "FACTURACION",
+                "CERTIFICADO", "SEGURO", "FRAGIL", "PRIORITARIO", "SAME DAY", "NEXT DAY", "WAREHOUSE",
+                "REPARTO", "COURIER", "POSTVENTA", "SOPORTE", "SMS", "NOTIFICACIONES", "GPS", "FLOTA",
+                "ECOLOGICO", "SOSTENIBILIDAD", "DIGITAL", "AUTOMATION", "ROBOTS", "DRONES", "LOCKERS",
+                "PUNTOS DE SERVICIO", "OFICINAS", "CHATBOT", "API", "INTEGRACION", "DEVOLUCIONES",
+                "REEMBOLSOS", "CUSTOMER SERVICE"
+            ]
+        };
+
+        function isValidForCategory(answer, category) {
+            const normalizedAnswer = answer.toUpperCase();
+
+            if (validationLists[category]) {
+                return validationLists[category].includes(normalizedAnswer);
+            }
+            return true;
+        }
+
+        // Game configuration
+        const categories = ["Fruta", "País o Capital", "Parte del Cuerpo", "Algo relacionado a DHL", "Marca"];
+        const numParticipants = 1;
+        const totalRounds = 3;
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        // Game state variables
+        let currentRound = 0;
+        let currentLetter = '';
+        let gameStarted = false;
+        let roundActive = false;
+        let inputsFrozen = false;
+        let scores = [];
+        let playerName = "Jugador";
+        let playerSurname = "";
+        let roundStartTime; // To track when the round started for time calculation
+        let usedLetters = []; // New array to store used letters
+
+        // DOM elements
+        const roundCounterEl = document.getElementById('round-counter');
+        const currentLetterEl = document.getElementById('current-letter');
+        const startRoundBtn = document.getElementById('start-round-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const gameInputsEl = document.getElementById('game-inputs');
+        const scoreboardEl = document.getElementById('scoreboard');
+        const gameModal = document.getElementById('game-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        // Name Input Modal elements
+        const nameInputModal = document.getElementById('name-input-modal');
+        const playerNameInput = document.getElementById('player-name-input');
+        const playerSurnameInput = document.getElementById('player-surname-input');
+        const startGameBtnModal = document.getElementById('start-game-btn-modal');
+        const playerHeaderEl = document.getElementById('player-header');
+        const nameInputErrorMessage = document.getElementById('name-input-error-message');
+
+        // Letter Input Modal elements
+        const letterInputModal = document.getElementById('letter-input-modal');
+        const roundNumberLetterModal = document.getElementById('round-number-letter-modal');
+        const letterInput = document.getElementById('letter-input');
+        const letterInputErrorMessage = document.getElementById('letter-input-error-message'); // New error message element
+        const submitLetterBtn = document.getElementById('submit-letter-btn');
+
+        // Final Results Modal elements
+        const finalResultsModal = document.getElementById('final-results-modal');
+        const finalModalTitle = document.getElementById('final-modal-title');
+        const finalModalScore = document.getElementById('final-modal-score');
+        const finalModalRoundTimes = document.getElementById('final-modal-round-times');
+        const dhlTeamMessage = document.getElementById('dhl-team-message');
+        const finalModalCloseBtn = document.getElementById('final-modal-close-btn');
+
+
+        // --- Initialization ---
+        function initializeGame() {
+            scores = [{
+                participantId: 0,
+                total: 0,
+                roundScores: Array(totalRounds).fill(0),
+                timeTakenPerRound: Array(totalRounds).fill('00:00')
+            }];
+            usedLetters = []; // Initialize used letters
+            renderGameInputs();
+            updateScoreboard();
+            resetGameUI();
+        }
+
+        function resetGameUI() {
+            currentRound = 0;
+            currentLetter = '?';
+            gameStarted = false;
+            roundActive = false;
+            inputsFrozen = false;
+            roundCounterEl.textContent = `${currentRound} / ${totalRounds}`;
+            currentLetterEl.textContent = currentLetter;
+            startRoundBtn.disabled = false;
+            stopBtn.disabled = true;
+            clearAllInputs();
+            disableAllInputs();
+            playerName = "Jugador";
+            playerSurname = "";
+            playerHeaderEl.textContent = "Jugador";
+            scores = [{
+                participantId: 0,
+                total: 0,
+                roundScores: Array(totalRounds).fill(0),
+                timeTakenPerRound: Array(totalRounds).fill('00:00')
+            }];
+            usedLetters = []; // Reset used letters on full game restart
+            updateScoreboard();
+            hideModal(gameModal);
+            hideModal(letterInputModal);
+            hideModal(finalResultsModal);
+            showModal(nameInputModal);
+            playerNameInput.value = "";
+            playerSurnameInput.value = "";
+            letterInput.value = "";
+            nameInputErrorMessage.textContent = "";
+            letterInputErrorMessage.textContent = ""; // Clear letter error message
+        }
+
+        // --- Rendering Functions ---
+        function renderGameInputs() {
+            gameInputsEl.innerHTML = '';
+
+            categories.forEach(category => {
+                const row = document.createElement('tr');
+                row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-100');
+
+                const categoryCell = document.createElement('td');
+                categoryCell.classList.add('py-3', 'px-6', 'text-left', 'font-semibold');
+                categoryCell.textContent = category;
+                row.appendChild(categoryCell);
+
+                const inputCell = document.createElement('td');
+                inputCell.classList.add('py-3', 'px-6', 'text-center');
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.classList.add('input-field');
+                input.placeholder = `Tu respuesta`;
+                input.dataset.category = category;
+                input.dataset.participantId = 0;
+                input.disabled = true;
+                inputCell.appendChild(input);
+                row.appendChild(inputCell);
+
+                gameInputsEl.appendChild(row);
+            });
+        }
+
+        function updateScoreboard() {
+            scoreboardEl.innerHTML = '';
+
+            const playerScore = scores[0];
+            const row = document.createElement('tr');
+            row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-50');
+
+            const nameCell = document.createElement('td');
+            nameCell.classList.add('py-3', 'px-6', 'text-left');
+            nameCell.textContent = `${playerName} ${playerSurname}`;
+            row.appendChild(nameCell);
+
+            for (let i = 0; i < totalRounds; i++) {
+                const roundScoreCell = document.createElement('td');
+                roundScoreCell.classList.add('py-3', 'px-6', 'text-center', 'font-bold');
+                roundScoreCell.textContent = playerScore.roundScores[i] !== undefined ? playerScore.roundScores[i] : '-';
+                row.appendChild(roundScoreCell);
+            }
+
+            const totalScoreCell = document.createElement('td');
+            totalScoreCell.classList.add('py-3', 'px-6', 'text-center', 'font-bold', 'text-dhl-red');
+            totalScoreCell.textContent = playerScore.total;
+            row.appendChild(totalScoreCell);
+
+            scoreboardEl.appendChild(row);
+        }
+
+        // --- Game Flow Functions ---
+        function startGame() {
+            const name = playerNameInput.value.trim();
+            const surname = playerSurnameInput.value.trim();
+
+            if (name === "" || surname === "") {
+                nameInputErrorMessage.textContent = "Por favor, ingresa tu nombre y apellido para comenzar el juego.";
+                return;
+            }
+
+            nameInputErrorMessage.textContent = "";
+            playerName = name;
+            playerSurname = surname;
+            playerHeaderEl.textContent = `${playerName} ${playerSurname}`;
+            hideModal(nameInputModal);
+
+            gameStarted = true;
+            scores[0].total = 0;
+            scores[0].roundScores = Array(totalRounds).fill(0);
+            scores[0].timeTakenPerRound = Array(totalRounds).fill('00:00');
+            usedLetters = []; // Ensure used letters is reset for a new game
+            updateScoreboard();
+            promptForLetter();
+        }
+
+        function promptForLetter() {
+            roundNumberLetterModal.textContent = currentRound + 1;
+            letterInput.value = "";
+            letterInputErrorMessage.textContent = ""; // Clear previous error message
+            showModal(letterInputModal);
+        }
+
+        function submitLetter() {
+            const letter = letterInput.value.trim().toUpperCase();
+
+            if (letter.length !== 1 || !/^[A-Z]$/.test(letter)) {
+                letterInputErrorMessage.textContent = "Por favor, ingresa una sola letra válida del alfabeto.";
+                return;
+            }
+
+            if (usedLetters.includes(letter)) {
+                letterInputErrorMessage.textContent = `La letra "${letter}" ya ha sido utilizada. Elige otra.`;
+                return;
+            }
+
+            letterInputErrorMessage.textContent = ""; // Clear error if valid
+            usedLetters.push(letter); // Add to used letters
+            currentLetter = letter;
+            hideModal(letterInputModal);
+            startRound();
+        }
+
+        function startRound() {
+            currentRound++;
+            if (currentRound > totalRounds) {
+                // This should ideally not be reached if game ends correctly after 3 rounds
+                endGame();
+                return;
+            }
+
+            roundCounterEl.textContent = `${currentRound} / ${totalRounds}`;
+            currentLetterEl.textContent = currentLetter;
+
+            clearAllInputs();
+            enableAllInputs();
+            startRoundBtn.disabled = true;
+            stopBtn.disabled = false;
+            restartBtn.disabled = false;
+            roundActive = true;
+            inputsFrozen = false;
+
+            updateScoreboard();
+
+            roundAnswers = {};
+            categories.forEach(cat => roundAnswers[cat] = {});
+
+            roundStartTime = Date.now();
+
+            showMessage(`¡Ronda ${currentRound}!`, `La letra es: "${currentLetter}". ¡Comienza a escribir!`);
+        }
+
+        function stopGame() {
+            if (!roundActive && !inputsFrozen) return;
+
+            const timeElapsedMs = Date.now() - roundStartTime;
+            const totalSeconds = Math.floor(timeElapsedMs / 1000);
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            scores[0].timeTakenPerRound[currentRound - 1] = `${minutes}:${seconds}`;
+
+            inputsFrozen = true;
+            roundActive = false;
+            stopBtn.disabled = true;
+            disableAllInputs();
+
+            showMessage("¡STOP!", "Calculando puntos de la ronda...");
+
+            setTimeout(() => {
+                calculateRoundScores();
+                updateScoreboard();
+                // If it's the last round, show the final results modal immediately after round scores are calculated
+                if (currentRound === totalRounds) {
+                    // Hide the current game modal first, then show the final results modal
+                    hideModal(gameModal);
+                    endGame();
+                } else {
+                    // If not the last round, re-enable buttons for next round
+                    startRoundBtn.disabled = false;
+                    restartBtn.disabled = false;
+                }
+            }, 1500);
+        }
+
+        function calculateRoundScores() {
+            const inputFields = document.querySelectorAll('.input-field');
+            let roundScore = 0;
+            let roundSummary = '';
+
+            categories.forEach(category => {
+                roundSummary += `<h4 class="font-bold text-lg text-dhl-red mt-4">${category}:</h4>`;
+                const input = Array.from(inputFields).find(input => input.dataset.category === category);
+                const answer = input.value.trim().toUpperCase();
+                let points = 0;
+                let status = '0 pts (Incorrecto/Vacío)';
+
+                const startsWithCorrectLetter = answer && answer.startsWith(currentLetter);
+
+                if (startsWithCorrectLetter) {
+                    if (isValidForCategory(answer, category)) {
+                        points = 10;
+                        status = '10 pts (Única)';
+                    } else {
+                        status = '0 pts (No aplica a la categoría)';
+                    }
+                }
+                roundScore += points;
+                roundSummary += `<p>${answer || 'Vacío'}: ${status}</p>`;
+            });
+
+            scores[0].roundScores[currentRound - 1] = roundScore;
+            scores[0].total += roundScore;
+
+            modalTitle.textContent = `Resultados Ronda ${currentRound}`;
+            modalMessage.innerHTML = roundSummary;
+            showModal(gameModal);
+
+            updateScoreboard();
+        }
+
+        function endGame() {
+            gameStarted = false;
+            stopBtn.disabled = true;
+            startRoundBtn.disabled = false; // Enable for a new game
+            restartBtn.disabled = false; // Enable restart button
+
+            const finalScore = scores[0].total;
+            finalModalTitle.textContent = "¡Juego Terminado!";
+            finalModalScore.textContent = `Tu puntuación final es: ${finalScore} puntos.`;
+
+            let roundTimesHtml = '<h4>Tiempos por Ronda:</h4>';
+            scores[0].timeTakenPerRound.forEach((time, index) => {
+                roundTimesHtml += `<p>Ronda ${index + 1}: ${time}</p>`;
+            });
+            finalModalRoundTimes.innerHTML = roundTimesHtml;
+
+            dhlTeamMessage.innerHTML = `En DHL, cada entrega es un esfuerzo de equipo. ¡Tu dedicación en este juego refleja el espíritu de excelencia que nos impulsa! ¡Gracias por ser parte de nuestro equipo!`;
+            showModal(finalResultsModal);
+
+            // The final modal's close button will just hide the modal, not reset the game
+            finalModalCloseBtn.onclick = () => {
+                hideModal(finalResultsModal);
+                // Game state remains as finished, user can use "Volver a Comenzar" on main UI
+            };
+        }
+
+        // --- Event Listeners ---
+        startRoundBtn.addEventListener('click', promptForLetter);
+        stopBtn.addEventListener('click', stopGame);
+        restartBtn.addEventListener('click', resetGameUI); // This button explicitly restarts the game
+
+        // The modalCloseBtn listener now only hides the game modal.
+        // The endGame call for the last round is handled directly in stopGame.
+        modalCloseBtn.addEventListener('click', () => {
+            hideModal(gameModal);
+            // Buttons are enabled in stopGame or endGame
+        });
+
+        startGameBtnModal.addEventListener('click', startGame);
+        submitLetterBtn.addEventListener('click', submitLetter);
+        // finalModalCloseBtn listener is defined within endGame() for clarity of flow.
+
+        // Initial setup
+        initializeGame();
+    </script>
+</body>
+</html>
