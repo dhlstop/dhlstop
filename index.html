@@ -55,14 +55,14 @@
         }
 
         /* Updated input[type="text"] styles for red border and red text */
-        input[type="text"] {
+        input[type="text"], input[type="password"] {
             @apply p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-dhl-red;
             width: 100%;
             box-sizing: border-box;
             border: 2px solid #CC0000; /* Red border */
             color: #CC0000; /* Red text color */
         }
-        input[type="text"]::placeholder {
+        input[type="text"]::placeholder, input[type="password"]::placeholder {
             color: rgba(204, 0, 0, 0.7); /* Lighter red for placeholder */
         }
 
@@ -134,13 +134,49 @@
             margin-bottom: 15px;
             font-size: 0.9rem;
         }
+
+        /* Roulette specific styles */
+        .roulette-wheel {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 8px solid #CC0000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #CC0000;
+            overflow: hidden;
+            position: relative;
+            margin: 0 auto 20px;
+            background-color: #FFCC00;
+        }
+        .roulette-letter {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 4s ease-out; /* Smooth stop effect */
+        }
+        .roulette-wheel.spinning .roulette-letter {
+            animation: spin 2s infinite linear;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
     <div class="container">
         <!-- DHL Logo as Header -->
         <div class="flex justify-center mb-6">
-            <img src="logo.png" alt="DHL Logo" class="h-auto max-w-full rounded-lg" style="width: 400px;">
+            <!-- Using a placeholder image for the DHL logo -->
+            <img src="https://placehold.co/400x100/FFCC00/CC0000?text=DHL+Logo" alt="DHL Logo" class="h-auto max-w-full rounded-lg" style="width: 400px;">
         </div>
         <h1 class="text-4xl font-extrabold text-center text-gray-800 mb-6">¡Juego STOP DHL!</h1>
 
@@ -149,6 +185,7 @@
             <div class="text-center md:text-left">
                 <p class="text-lg font-semibold text-gray-700">Ronda: <span id="round-counter" class="text-2xl font-bold text-dhl-red">0 / 3</span></p>
                 <p class="text-lg font-semibold text-gray-700">Letra Actual: <span id="current-letter" class="text-4xl font-extrabold text-dhl-red">?</span></p>
+                <p class="text-lg font-semibold text-gray-700">Tu ID: <span id="user-id-display" class="text-md font-bold text-dhl-red">Cargando...</span></p>
             </div>
             <div class="flex gap-4">
                 <button id="start-round-btn" class="btn-primary">Iniciar Ronda</button>
@@ -163,11 +200,12 @@
                 <thead>
                     <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
                         <th class="py-3 px-6 text-left">Categoría</th>
-                        <th class="py-3 px-6 text-center" colspan="1">Participante</th>
+                        <!-- Participant headers will be dynamically generated here -->
+                        <th class="py-3 px-6 text-center" colspan="16" id="participants-header-row">Participantes</th>
                     </tr>
-                    <tr class="uppercase text-sm leading-normal">
+                    <tr class="uppercase text-sm leading-normal" id="player-names-header">
                         <th class="py-2 px-4 text-left dhl-yellow text-dhl-red"></th>
-                        <th class="py-2 px-4 text-center dhl-yellow text-dhl-red" id="player-header">Jugador</th>
+                        <!-- Player names will be dynamically generated here -->
                     </tr>
                 </thead>
                 <tbody id="game-inputs" class="text-gray-700 text-sm">
@@ -177,11 +215,11 @@
         </div>
 
         <!-- Scoreboard -->
-        <div class="p-5 rounded-xl bg-gray-50 shadow-lg">
+        <div class="p-5 rounded-xl bg-gray-50 shadow-lg overflow-x-auto">
             <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Marcador</h2>
             <table class="min-w-full bg-white rounded-lg overflow-hidden">
                 <thead>
-                    <tr class="uppercase text-sm leading-normal">
+                    <tr class="uppercase text-sm leading-normal" id="scoreboard-header-row">
                         <th class="py-3 px-6 text-left dhl-yellow text-dhl-red">Participante</th>
                         <th class="py-3 px-6 text-center dhl-yellow text-dhl-red">Ronda 1</th>
                         <th class="py-3 px-6 text-center dhl-yellow text-dhl-red">Ronda 2</th>
@@ -205,26 +243,26 @@
         </div>
     </div>
 
-    <!-- Modal for Name Input -->
-    <div id="name-input-modal" class="modal show">
+    <!-- Modal for Name Input (for all players) -->
+    <div id="name-input-modal" class="modal">
         <div class="modal-content">
             <h3 class="modal-title">¡Bienvenido al Juego STOP de DHL!</h3>
-            <p class="modal-message">Por favor, ingresa tu nombre y apellido para comenzar.</p>
+            <p class="modal-message">Por favor, ingresa tu nombre para comenzar.</p>
             <input type="text" id="player-name-input" placeholder="Nombre" class="mb-3">
-            <input type="text" id="player-surname-input" placeholder="Apellido" class="mb-5">
             <div id="name-input-error-message" class="text-dhl-red mb-3"></div>
             <button id="start-game-btn-modal" class="modal-button">Comenzar Juego</button>
         </div>
     </div>
 
-    <!-- Modal for Letter Input -->
-    <div id="letter-input-modal" class="modal">
+    <!-- New Modal for Roulette Effect -->
+    <div id="roulette-modal" class="modal">
         <div class="modal-content">
-            <h3 class="modal-title">Letra para la Ronda <span id="round-number-letter-modal"></span></h3>
-            <p class="modal-message">Ingresa una letra para esta ronda:</p>
-            <input type="text" id="letter-input" maxlength="1" class="mb-3">
-            <div id="letter-input-error-message" class="text-dhl-red mb-3"></div> <!-- New error message div -->
-            <button id="submit-letter-btn" class="modal-button">Confirmar Letra</button>
+            <h3 class="modal-title">¡Girando la Ruleta!</h3>
+            <p class="modal-message">La letra para la Ronda <span id="roulette-round-number"></span> se está seleccionando...</p>
+            <div class="roulette-wheel" id="roulette-wheel">
+                <span class="roulette-letter" id="roulette-display-letter">?</span>
+            </div>
+            <p class="modal-message text-sm text-gray-500 mt-4">Solo el jugador principal puede iniciar la ruleta.</p>
         </div>
     </div>
 
@@ -239,12 +277,25 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // --- Utility Functions ---
+        /**
+         * Shows a given modal element by adding the 'show' class.
+         * @param {HTMLElement} modalElement - The modal element to show.
+         */
         function showModal(modalElement) {
             modalElement.classList.add('show');
         }
 
+        /**
+         * Hides a given modal element by removing the 'show' class.
+         * @param {HTMLElement} modalElement - The modal element to hide.
+         */
         function hideModal(modalElement) {
             modalElement.classList.remove('show');
         }
@@ -281,41 +332,57 @@
             }
         }
 
+        /**
+         * Clears all input fields for the current player in the game table.
+         */
         function clearAllInputs() {
-            document.querySelectorAll('.input-field').forEach(input => {
+            document.querySelectorAll(`.input-field[data-participant-id="${myParticipantId}"]`).forEach(input => {
                 input.value = '';
             });
         }
 
+        /**
+         * Enables all input fields for the current player in the game table.
+         */
         function enableAllInputs() {
-            document.querySelectorAll('.input-field').forEach(input => {
+            document.querySelectorAll(`.input-field[data-participant-id="${myParticipantId}"]`).forEach(input => {
                 input.disabled = false;
             });
         }
 
+        /**
+         * Disables all input fields for the current player in the game table.
+         */
         function disableAllInputs() {
-            document.querySelectorAll('.input-field').forEach(input => {
+            document.querySelectorAll(`.input-field[data-participant-id="${myParticipantId}"]`).forEach(input => {
                 input.disabled = true;
             });
         }
 
         // --- Game configuration ---
         const categories = ["Fruta", "País o Capital", "Parte del Cuerpo", "Algo relacionado a DHL", "Marca"];
-        const numParticipants = 1;
         const totalRounds = 3;
-        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // All possible letters
 
-        // --- Game state variables ---
+        // --- Firebase variables ---
+        let app;
+        let db;
+        let auth;
+        let currentUserId = null;
+        let myParticipantId = null; // Stores the participantId for the current user
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const gameRef = () => doc(db, `artifacts/${appId}/public/data/stop_dhl_game_state`, 'game_id');
+
+        // --- Game state variables (local cache, updated by Firestore) ---
         let currentRound = 0;
         let currentLetter = '';
         let gameStarted = false;
         let roundActive = false;
         let inputsFrozen = false;
-        let scores = [];
-        let playerName = "Jugador";
-        let playerSurname = "";
-        let roundStartTime; // To track when the round started for time calculation
+        let scores = []; // Array to hold score objects for all participants
         let usedLetters = []; // Array to store used letters to prevent repetition
+        let roundStartTime; // To track when the round started for time calculation
 
         // --- DOM elements ---
         const roundCounterEl = document.getElementById('round-counter');
@@ -329,19 +396,19 @@
         const modalTitle = document.getElementById('modal-title');
         const modalMessage = document.getElementById('modal-message');
         const modalCloseBtn = document.getElementById('modal-close-btn');
+        const userIdDisplayEl = document.getElementById('user-id-display');
 
         const nameInputModal = document.getElementById('name-input-modal');
         const playerNameInput = document.getElementById('player-name-input');
-        const playerSurnameInput = document.getElementById('player-surname-input');
         const startGameBtnModal = document.getElementById('start-game-btn-modal');
-        const playerHeaderEl = document.getElementById('player-header');
+        const playerNamesHeaderEl = document.getElementById('player-names-header'); // New element for player names in input table header
+        const participantsHeaderRow = document.getElementById('participants-header-row'); // The colspan header
         const nameInputErrorMessage = document.getElementById('name-input-error-message');
 
-        const letterInputModal = document.getElementById('letter-input-modal');
-        const roundNumberLetterModal = document.getElementById('round-number-letter-modal');
-        const letterInput = document.getElementById('letter-input');
-        const letterInputErrorMessage = document.getElementById('letter-input-error-message');
-        const submitLetterBtn = document.getElementById('submit-letter-btn');
+        const rouletteModal = document.getElementById('roulette-modal');
+        const rouletteRoundNumber = document.getElementById('roulette-round-number');
+        const rouletteWheel = document.getElementById('roulette-wheel');
+        const rouletteDisplayLetter = document.getElementById('roulette-display-letter');
 
         const finalResultsModal = document.getElementById('final-results-modal');
         const finalModalTitle = document.getElementById('final-modal-title');
@@ -350,304 +417,636 @@
         const dhlTeamMessage = document.getElementById('dhl-team-message');
         const finalModalCloseBtn = document.getElementById('final-modal-close-btn');
 
-
-        // --- Initialization ---
-        function initializeGame() {
-            scores = [{
-                participantId: 0,
-                total: 0,
-                roundScores: Array(totalRounds).fill(0),
-                timeTakenPerRound: Array(totalRounds).fill('00:00')
-            }];
-            usedLetters = []; // Initialize used letters
-            renderGameInputs();
-            updateScoreboard();
-            resetGameUI(); // Calls resetGameUI to set initial state and show name input modal
-        }
-
         /**
-         * Resets the game UI and state to its initial conditions.
+         * Initializes Firebase and sets up authentication.
          */
-        function resetGameUI() {
-            currentRound = 0;
-            currentLetter = '?';
-            gameStarted = false;
-            roundActive = false;
-            inputsFrozen = false;
-            roundCounterEl.textContent = `${currentRound} / ${totalRounds}`;
-            currentLetterEl.textContent = currentLetter;
-            startRoundBtn.disabled = false;
-            stopBtn.disabled = true;
-            clearAllInputs();
-            disableAllInputs();
-            playerName = "Jugador"; // Reset player name
-            playerSurname = ""; // Reset player surname
-            playerHeaderEl.textContent = "Jugador"; // Reset header
-            scores = [{
-                participantId: 0,
-                total: 0,
-                roundScores: Array(totalRounds).fill(0),
-                timeTakenPerRound: Array(totalRounds).fill('00:00')
-            }];
-            usedLetters = []; // Reset used letters on full game restart
-            updateScoreboard();
-            // Hide all modals to ensure a clean start
-            hideModal(gameModal);
-            hideModal(letterInputModal);
-            hideModal(finalResultsModal);
-            showModal(nameInputModal); // Show name input modal to start a new game
-            playerNameInput.value = ""; // Clear name input
-            playerSurnameInput.value = ""; // Clear surname input
-            letterInput.value = ""; // Clear letter input
-            nameInputErrorMessage.textContent = ""; // Clear error messages
-            letterInputErrorMessage.textContent = "";
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        userIdDisplayEl.textContent = currentUserId;
+                        await registerOrLoadPlayer(currentUserId);
+                        setupGameListener();
+                    } else {
+                        // Sign in anonymously if no user is logged in
+                        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showMessage("Error de Inicialización", "No se pudo conectar con el servidor. Por favor, inténtalo de nuevo más tarde.");
+            }
         }
 
         /**
-         * Renders the input fields for each category.
+         * Registers a new player or loads an existing player's data from Firestore.
+         * This function is now simplified as name input happens later for new players.
+         * @param {string} userId - The Firebase user ID.
+         */
+        async function registerOrLoadPlayer(userId) {
+            const gameDoc = await getDoc(gameRef());
+            let gameData = gameDoc.exists() ? gameDoc.data() : null;
+
+            if (!gameData || !gameData.players) {
+                // Initialize game state if it doesn't exist
+                gameData = {
+                    currentRound: 0,
+                    currentLetter: '?',
+                    gameStarted: false,
+                    roundActive: false,
+                    inputsFrozen: false,
+                    usedLetters: [],
+                    roundStartTime: 0,
+                    rouletteSpinning: false,
+                    players: []
+                };
+                await setDoc(gameRef(), gameData);
+            }
+
+            const existingPlayer = gameData.players.find(p => p.userId === userId);
+
+            if (existingPlayer) {
+                myParticipantId = existingPlayer.participantId;
+                playerNameInput.value = existingPlayer.name; // Pre-fill name if already registered
+                hideModal(nameInputModal); // Hide name input if already registered
+                console.log(`Player ${existingPlayer.name} loaded with ID: ${myParticipantId}`);
+            } else {
+                // New player. Show name modal immediately.
+                myParticipantId = null; // Ensure myParticipantId is null for new users until name is entered
+                showModal(nameInputModal); // Show name input modal for new users
+                playerNameInput.value = ""; // Clear name input
+                nameInputErrorMessage.textContent = ""; // Clear error message
+                console.log("New player. Prompting for name.");
+            }
+        }
+
+        /**
+         * Sets up the real-time listener for the game state in Firestore.
+         */
+        function setupGameListener() {
+            onSnapshot(gameRef(), (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const data = docSnapshot.data();
+                    // Update local game state variables
+                    currentRound = data.currentRound;
+                    currentLetter = data.currentLetter;
+                    gameStarted = data.gameStarted;
+                    roundActive = data.roundActive;
+                    inputsFrozen = data.inputsFrozen;
+                    scores = data.players; // Update local scores array with Firestore data
+                    usedLetters = data.usedLetters || [];
+                    roundStartTime = data.roundStartTime || 0;
+
+                    // Determine if current user is player 0
+                    const isPlayerZero = scores.some(p => p.userId === currentUserId && p.participantId === 0);
+
+                    // Update button states based on game state and current player's role
+                    // Player 0 can start round if game not started or all rounds completed
+                    startRoundBtn.disabled = roundActive || inputsFrozen || currentRound >= totalRounds || (gameStarted && !isPlayerZero);
+                    stopBtn.disabled = !roundActive || inputsFrozen;
+                    restartBtn.disabled = !gameStarted && currentRound === 0;
+
+                    renderGameInputs(); // Re-render inputs to reflect latest player names and states
+                    updateScoreboard(); // Re-render scoreboard with latest scores
+                    
+                    // Only enable/disable inputs for the current player
+                    if (roundActive && !inputsFrozen) {
+                        enableAllInputs();
+                    } else {
+                        disableAllInputs();
+                    }
+
+                    // Handle roulette modal visibility
+                    if (data.rouletteSpinning) { // Roulette spinning for everyone to see
+                        showModal(rouletteModal);
+                        rouletteRoundNumber.textContent = currentRound + 1;
+                        rouletteWheel.classList.add('spinning');
+                        rouletteDisplayLetter.textContent = '?'; // Reset display
+                    } else if (!data.rouletteSpinning && rouletteModal.classList.contains('show')) {
+                        hideModal(rouletteModal);
+                        rouletteWheel.classList.remove('spinning');
+                        rouletteDisplayLetter.textContent = currentLetter; // Show the final letter
+                    }
+
+                    // Logic to show name input modal for new players:
+                    // Only show if myParticipantId is null (meaning this user hasn't registered their name yet).
+                    if (myParticipantId === null && !nameInputModal.classList.contains('show')) {
+                        showModal(nameInputModal);
+                        playerNameInput.value = ""; // Clear name input
+                        nameInputErrorMessage.textContent = ""; // Clear error message
+                    } else if (myParticipantId !== null && nameInputModal.classList.contains('show')) {
+                        hideModal(nameInputModal); // Hide if already registered
+                    }
+
+                    // Show round start message for all players after roulette stops and round is active
+                    if (currentRound > 0 && currentLetter !== '?' && roundActive && !inputsFrozen && !rouletteModal.classList.contains('show')) {
+                        showMessage(`¡Ronda ${currentRound}!`, `La letra es: "${currentLetter}". ¡Comienza a escribir!`, false);
+                    }
+
+
+                } else {
+                    console.log("No game state found in Firestore. Initializing a new game.");
+                    resetGameUI();
+                }
+            }, (error) => {
+                console.error("Error listening to game state:", error);
+                showMessage("Error de Conexión", "No se pudo sincronizar el estado del juego. Por favor, recarga la página.");
+            });
+        }
+
+        /**
+         * Renders the input fields for each category and participant.
          */
         function renderGameInputs() {
             gameInputsEl.innerHTML = '';
+            playerNamesHeaderEl.innerHTML = '<th class="py-2 px-4 text-left dhl-yellow text-dhl-red"></th>'; // Clear and add empty cell for category header
+
+            // Adjust colspan for participants header based on whether columns are hidden
+            const numVisiblePlayers = (roundActive && !inputsFrozen) ? 1 : scores.length;
+            participantsHeaderRow.setAttribute('colspan', numVisiblePlayers);
+
+
+            // Add player names to the table header
+            scores.forEach(player => {
+                const th = document.createElement('th');
+                th.classList.add('py-2', 'px-4', 'text-center', 'dhl-yellow', 'text-dhl-red', 'whitespace-nowrap');
+                th.textContent = `${player.name}`; // Only display name
+                if (roundActive && !inputsFrozen && player.participantId !== myParticipantId) {
+                    // Hide other players' headers during active round
+                    th.classList.add('hidden');
+                }
+                playerNamesHeaderEl.appendChild(th);
+            });
 
             categories.forEach(category => {
                 const row = document.createElement('tr');
                 row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-100');
 
                 const categoryCell = document.createElement('td');
-                categoryCell.classList.add('py-3', 'px-6', 'text-left', 'font-semibold');
+                categoryCell.classList.add('py-3', 'px-6', 'text-left', 'font-semibold', 'whitespace-nowrap');
                 categoryCell.textContent = category;
                 row.appendChild(categoryCell);
 
-                const inputCell = document.createElement('td');
-                inputCell.classList.add('py-3', 'px-6', 'text-center');
+                // Create an input field or placeholder for each participant for the current category
+                scores.forEach(player => {
+                    const inputCell = document.createElement('td');
+                    inputCell.classList.add('py-3', 'px-2', 'text-center'); // Reduced padding for more columns
 
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.classList.add('input-field');
-                input.placeholder = `Tu respuesta`;
-                input.dataset.category = category;
-                input.dataset.participantId = 0;
-                input.disabled = true; // Inputs are disabled until a round starts
-                inputCell.appendChild(input);
-                row.appendChild(inputCell);
-
+                    if (roundActive && !inputsFrozen && player.participantId !== myParticipantId) {
+                        // Hide other players' input cells during active round
+                        inputCell.classList.add('hidden');
+                        const placeholderSpan = document.createElement('span');
+                        placeholderSpan.classList.add('text-gray-400', 'italic');
+                        placeholderSpan.textContent = 'Oculto'; // Indicate that this is another player's slot
+                        inputCell.appendChild(placeholderSpan);
+                    } else if (player.participantId === myParticipantId) {
+                        // This is the current player's input field
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.classList.add('input-field');
+                        input.placeholder = `Tu respuesta`; // Specific placeholder for current player
+                        input.dataset.category = category;
+                        input.dataset.participantId = player.participantId;
+                        input.disabled = true; // Still disabled by default, enabled by game state
+                        // Pre-fill input if data exists from previous rounds (for current user)
+                        if (currentRound > 0) {
+                            const playerRoundData = player.roundAnswers ? player.roundAnswers[currentRound - 1] : null;
+                            if (playerRoundData && playerRoundData[category]) {
+                                input.value = playerRoundData[category];
+                            }
+                        }
+                        inputCell.appendChild(input);
+                    } else {
+                         // For other players when not in active round, show their answers or 'Esperando...'
+                        const playerRoundData = player.roundAnswers ? player.roundAnswers[currentRound - 1] : null;
+                        const answer = (playerRoundData && playerRoundData[category]) ? playerRoundData[category] : 'Esperando...';
+                        const displaySpan = document.createElement('span');
+                        displaySpan.textContent = answer;
+                        displaySpan.classList.add('text-gray-700');
+                        if (answer === 'Esperando...') {
+                            displaySpan.classList.add('italic', 'text-gray-400');
+                        }
+                        inputCell.appendChild(displaySpan);
+                    }
+                    row.appendChild(inputCell);
+                });
                 gameInputsEl.appendChild(row);
             });
         }
 
         /**
-         * Updates the scoreboard with current scores and times.
+         * Updates the scoreboard with current scores and times for all participants.
          */
         function updateScoreboard() {
             scoreboardEl.innerHTML = '';
 
-            const playerScore = scores[0];
-            const row = document.createElement('tr');
-            row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-50');
-
-            const nameCell = document.createElement('td');
-            nameCell.classList.add('py-3', 'px-6', 'text-left');
-            nameCell.textContent = `${playerName} ${playerSurname}`;
-            row.appendChild(nameCell);
-
-            // Add cells for each round's score
+            // Update the scoreboard header to reflect current round numbers
+            const scoreboardHeaderRow = document.getElementById('scoreboard-header-row');
+            scoreboardHeaderRow.innerHTML = `
+                <th class="py-3 px-6 text-left dhl-yellow text-dhl-red">Participante</th>
+            `;
             for (let i = 0; i < totalRounds; i++) {
-                const roundScoreCell = document.createElement('td');
-                roundScoreCell.classList.add('py-3', 'px-6', 'text-center', 'font-bold');
-                roundScoreCell.textContent = playerScore.roundScores[i] !== undefined ? playerScore.roundScores[i] : '-';
-                row.appendChild(roundScoreCell);
+                scoreboardHeaderRow.innerHTML += `<th class="py-3 px-6 text-center dhl-yellow text-dhl-red">Ronda ${i + 1}</th>`;
             }
+            scoreboardHeaderRow.innerHTML += `<th class="py-3 px-6 text-center dhl-yellow text-dhl-red">Puntos Totales</th>`;
 
-            const totalScoreCell = document.createElement('td');
-            totalScoreCell.classList.add('py-3', 'px-6', 'text-center', 'font-bold', 'text-dhl-red');
-            totalScoreCell.textContent = playerScore.total;
-            row.appendChild(totalScoreCell);
 
-            scoreboardEl.appendChild(row);
+            scores.forEach(playerScore => {
+                const row = document.createElement('tr');
+                row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-50');
+
+                const nameCell = document.createElement('td');
+                nameCell.classList.add('py-3', 'px-6', 'text-left', 'whitespace-nowrap');
+                nameCell.textContent = `${playerScore.name}`; // Only display name
+                row.appendChild(nameCell);
+
+                // Add cells for each round's score
+                for (let i = 0; i < totalRounds; i++) {
+                    const roundScoreCell = document.createElement('td');
+                    roundScoreCell.classList.add('py-3', 'px-6', 'text-center', 'font-bold');
+                    roundScoreCell.textContent = playerScore.roundScores[i] !== undefined ? playerScore.roundScores[i] : '-';
+                    row.appendChild(roundScoreCell);
+                }
+
+                const totalScoreCell = document.createElement('td');
+                totalScoreCell.classList.add('py-3', 'px-6', 'text-center', 'font-bold', 'text-dhl-red');
+                totalScoreCell.textContent = playerScore.total;
+                row.appendChild(totalScoreCell);
+
+                scoreboardEl.appendChild(row);
+            });
         }
 
         // --- Game Flow Functions ---
 
         /**
-         * Starts a new game after player name input.
+         * Registers player name after roulette spin or for joining players.
+         * This function is called when a user submits their name from the nameInputModal.
          */
-        function startGame() {
+        async function startGame() {
             const name = playerNameInput.value.trim();
-            const surname = playerSurnameInput.value.trim();
 
-            if (name === "" || surname === "") {
-                nameInputErrorMessage.textContent = "Por favor, ingresa tu nombre y apellido para comenzar el juego.";
+            if (name === "") {
+                nameInputErrorMessage.textContent = "Por favor, ingresa tu nombre para comenzar el juego.";
                 return;
             }
 
             nameInputErrorMessage.textContent = "";
-            playerName = name;
-            playerSurname = surname;
-            playerHeaderEl.textContent = `${playerName} ${playerSurname}`;
-            hideModal(nameInputModal);
 
-            gameStarted = true;
-            // Reset scores and used letters for a fresh game
-            scores[0].total = 0;
-            scores[0].roundScores = Array(totalRounds).fill(0);
-            scores[0].timeTakenPerRound = Array(totalRounds).fill('00:00');
-            usedLetters = [];
-            updateScoreboard();
-            promptForLetter(); // Prompt for the first letter
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const gameDoc = await transaction.get(gameRef());
+                    let gameData = gameDoc.data();
+
+                    let playerIndex = gameData.players.findIndex(p => p.userId === currentUserId);
+
+                    if (playerIndex === -1) {
+                        // New player joining an existing game (after roulette has spun)
+                        // Or the very first player, whose myParticipantId is still null here.
+                        const newParticipantId = gameData.players.length > 0 ? Math.max(...gameData.players.map(p => p.participantId)) + 1 : 0;
+                        myParticipantId = newParticipantId; // Set local participant ID
+                        const newPlayer = {
+                            participantId: newParticipantId,
+                            userId: currentUserId,
+                            name: name,
+                            total: 0,
+                            roundScores: Array(totalRounds).fill(0),
+                            timeTakenPerRound: Array(totalRounds).fill('00:00'),
+                            roundAnswers: Array(totalRounds).fill({}) // Store answers per round
+                        };
+                        gameData.players.push(newPlayer);
+                    } else {
+                        // Existing player updating name (e.g., player 0 updating placeholder name)
+                        gameData.players[playerIndex].name = name;
+                        myParticipantId = gameData.players[playerIndex].participantId; // Ensure local ID is correct
+                    }
+
+                    transaction.set(gameRef(), gameData);
+                });
+
+                hideModal(nameInputModal);
+                // The onSnapshot listener will update the UI after the transaction commits
+            } catch (error) {
+                console.error("Error starting game/registering player:", error);
+                showMessage("Error", "No se pudo iniciar el juego o registrar tu nombre. Por favor, inténtalo de nuevo.");
+            }
         }
 
         /**
-         * Shows the modal to prompt the user for a letter for the current round.
+         * Starts the roulette animation and selects a random letter.
+         * This function handles both initial game start and subsequent round starts for Player 0.
          */
-        function promptForLetter() {
-            roundNumberLetterModal.textContent = currentRound + 1;
-            letterInput.value = "";
-            letterInputErrorMessage.textContent = ""; // Clear previous error message
-            showModal(letterInputModal);
+        async function startRoulette() {
+            // If myParticipantId is null, it means the user hasn't entered their name yet.
+            // In this new flow, the name input modal is shown at the very beginning.
+            // So, this check primarily ensures only Player 0 can spin the roulette.
+            const gameDoc = await getDoc(gameRef());
+            const gameData = gameDoc.exists() ? gameDoc.data() : null;
+
+            // Determine if current user is player 0 based on current game data (which might be empty if first player)
+            let isPlayerZero = false;
+            if (gameData && gameData.players.length > 0) {
+                isPlayerZero = gameData.players.some(p => p.userId === currentUserId && p.participantId === 0);
+            } else {
+                // If no players exist, the current user will become player 0.
+                isPlayerZero = true;
+            }
+
+            if (!isPlayerZero) {
+                showMessage("Espera tu Turno", "Solo el jugador principal puede iniciar la ruleta.");
+                return;
+            }
+            if (currentRound >= totalRounds) {
+                showMessage("Juego Terminado", "Todas las rondas han sido jugadas. Por favor, reinicia el juego.");
+                return;
+            }
+
+            // Set roulette spinning state in Firestore
+            await updateDoc(gameRef(), { rouletteSpinning: true });
+
+            rouletteRoundNumber.textContent = currentRound + 1;
+            showModal(rouletteModal);
+            rouletteWheel.classList.add('spinning');
+            rouletteDisplayLetter.textContent = '?'; // Reset display
+
+            // Simulate spinning for a few seconds
+            let spinCount = 0;
+            const interval = setInterval(() => {
+                rouletteDisplayLetter.textContent = alphabet[Math.floor(Math.random() * alphabet.length)];
+                spinCount++;
+                if (spinCount > 30) { // Spin for a bit
+                    clearInterval(interval);
+                }
+            }, 100);
+
+            setTimeout(async () => {
+                // Select a random unused letter
+                let availableLetters = alphabet.split('').filter(letter => !usedLetters.includes(letter));
+                if (availableLetters.length === 0) {
+                    availableLetters = alphabet.split(''); // Reset if all letters used
+                }
+                const randomIndex = Math.floor(Math.random() * availableLetters.length);
+                const selectedLetter = availableLetters[randomIndex];
+
+                // Use a transaction to ensure atomicity for first player registration and game start
+                await runTransaction(db, async (transaction) => {
+                    const currentGameState = await transaction.get(gameRef());
+                    const updatedGameData = currentGameState.data();
+
+                    // If this is the very first spin and game hasn't started, set gameStarted to true
+                    if (!updatedGameData.gameStarted) {
+                        updatedGameData.gameStarted = true; // Game officially starts now
+                        updatedGameData.currentRound = 1; // First round
+                    } else {
+                        // For subsequent spins, just increment round
+                        updatedGameData.currentRound += 1;
+                    }
+
+                    updatedGameData.currentLetter = selectedLetter;
+                    updatedGameData.usedLetters = [...(updatedGameData.usedLetters || []), selectedLetter];
+                    updatedGameData.rouletteSpinning = false; // Stop spinning
+                    updatedGameData.roundActive = true;
+                    updatedGameData.inputsFrozen = false;
+                    updatedGameData.roundStartTime = Date.now();
+
+                    transaction.set(gameRef(), updatedGameData);
+                });
+
+                // The onSnapshot listener will then hide the roulette modal and start the round for all players
+            }, 4000); // Spin for 4 seconds
         }
 
         /**
-         * Handles the submission of the letter for the round.
-         * Validates the letter and starts the round if valid.
+         * Starts a new round of the game. This is triggered by Firestore update.
          */
-        function submitLetter() {
-            const letter = letterInput.value.trim().toUpperCase();
-
-            // Validate if it's a single alphabet character
-            if (letter.length !== 1 || !/^[A-Z]$/.test(letter)) {
-                letterInputErrorMessage.textContent = "Por favor, ingresa una sola letra válida del alfabeto.";
-                return;
-            }
-
-            // Check if the letter has already been used
-            if (usedLetters.includes(letter)) {
-                letterInputErrorMessage.textContent = `La letra "${letter}" ya ha sido utilizada. Elige otra.`;
-                return;
-            }
-
-            letterInputErrorMessage.textContent = ""; // Clear error if valid
-            usedLetters.push(letter); // Add to used letters array
-            currentLetter = letter;
-            hideModal(letterInputModal);
-            startRound();
-        }
-
-        /**
-         * Starts a new round of the game.
-         */
-        function startRound() {
-            currentRound++;
-            // This check is a safeguard; normal flow should prevent going beyond totalRounds here
-            if (currentRound > totalRounds) {
-                endGame();
-                return;
-            }
+        async function startRound() {
+            // This function is triggered by the onSnapshot listener when currentRound updates.
+            // No direct Firestore update here to avoid conflicts.
 
             roundCounterEl.textContent = `${currentRound} / ${totalRounds}`;
             currentLetterEl.textContent = currentLetter;
 
             clearAllInputs();
-            enableAllInputs();
+            enableAllInputs(); // Only enables current player's inputs
             startRoundBtn.disabled = true;
             stopBtn.disabled = false;
             restartBtn.disabled = false;
             roundActive = true;
             inputsFrozen = false;
 
-            updateScoreboard();
-
-            // Reset round answers (though not strictly necessary for single player, good practice)
-            roundAnswers = {};
-            categories.forEach(cat => roundAnswers[cat] = {});
+            updateScoreboard(); // Update scoreboard with current round's score
 
             roundStartTime = Date.now(); // Record the start time of the round
 
-            // Show initial round message
-            showMessage(`¡Ronda ${currentRound}!`, `La letra es: "${currentLetter}". ¡Comienza a escribir!`, false);
+            // Show initial round message (if not already shown by roulette modal)
+            if (!rouletteModal.classList.contains('show')) {
+                showMessage(`¡Ronda ${currentRound}!`, `La letra es: "${currentLetter}". ¡Comienza a escribir!`, false);
+            }
         }
 
         /**
          * Stops the current round, calculates time taken, and prepares for scoring.
          */
-        function stopGame() {
-            // Prevent multiple calls if already stopped or frozen
-            if (!roundActive && !inputsFrozen) return;
+        async function stopGame() {
+            // Only the player who presses STOP should trigger the Firestore update
+            if (!roundActive || inputsFrozen) return;
 
             const timeElapsedMs = Date.now() - roundStartTime; // Calculate time spent in milliseconds
             const totalSeconds = Math.floor(timeElapsedMs / 1000);
             const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
             const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-            // Store the time taken for the current round
-            scores[0].timeTakenPerRound[currentRound - 1] = `${minutes}:${seconds}`;
-
-            inputsFrozen = true;
-            roundActive = false;
-            stopBtn.disabled = true;
-            disableAllInputs(); // Disable inputs once STOP is pressed
+            const formattedTime = `${minutes}:${seconds}`;
 
             showMessage("¡STOP!", "Calculando puntos de la ronda...", false); // Show calculating message
 
-            // Delay calculation to allow user to see "Calculating points..." message
-            setTimeout(() => {
-                calculateRoundScores();
-                updateScoreboard();
-            }, 1500);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const gameDoc = await transaction.get(gameRef());
+                    const gameData = gameDoc.data();
+
+                    // Update time taken for all players in the game state
+                    gameData.players.forEach(player => {
+                        player.timeTakenPerRound[currentRound - 1] = formattedTime;
+                    });
+
+                    // Store current round's answers for the current player
+                    const inputFields = document.querySelectorAll(`.input-field[data-participant-id="${myParticipantId}"]`);
+                    const currentPlayerAnswers = {};
+                    categories.forEach(category => {
+                        const input = Array.from(inputFields).find(
+                            input => input.dataset.category === category
+                        );
+                        if (input) {
+                            currentPlayerAnswers[category] = input.value.trim().toUpperCase();
+                        }
+                    });
+
+                    const myPlayerIndex = gameData.players.findIndex(p => p.userId === currentUserId);
+                    if (myPlayerIndex !== -1) {
+                        // Ensure roundAnswers array exists and is correctly sized
+                        if (!gameData.players[myPlayerIndex].roundAnswers) {
+                            gameData.players[myPlayerIndex].roundAnswers = Array(totalRounds).fill({});
+                        }
+                        gameData.players[myPlayerIndex].roundAnswers[currentRound - 1] = currentPlayerAnswers;
+                    }
+
+                    gameData.inputsFrozen = true;
+                    gameData.roundActive = false;
+
+                    transaction.set(gameRef(), gameData);
+                });
+                // UI will be updated by the onSnapshot listener after transaction
+                setTimeout(() => {
+                    calculateRoundScores(); // Calculate scores after a short delay
+                }, 1500);
+            } catch (error) {
+                console.error("Error stopping game:", error);
+                showMessage("Error", "No se pudo detener la ronda. Por favor, inténtalo de nuevo.");
+            }
         }
 
         /**
-         * Calculates scores for the current round based on answers.
+         * Calculates scores for the current round based on answers for all participants.
+         * This function should be called after all players have submitted their answers (or after STOP).
          */
-        function calculateRoundScores() {
-            const inputFields = document.querySelectorAll('.input-field');
-            let roundScore = 0;
-            let roundSummary = '';
+        async function calculateRoundScores() {
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const gameDoc = await transaction.get(gameRef());
+                    const gameData = gameDoc.data();
 
-            categories.forEach(category => {
-                roundSummary += `<h4 class="font-bold text-lg text-dhl-red mt-4">${category}:</h4>`;
-                const input = Array.from(inputFields).find(input => input.dataset.category === category);
-                const answer = input.value.trim().toUpperCase();
-                let points = 0;
-                let status = '0 pts (Incorrecto/Vacío)';
+                    // Step 1: Collect all answers for the current round and categorize them
+                    const allRoundAnswers = {}; // { category: { answer: [participantId1, participantId2], ... }, ... }
 
-                const startsWithCorrectLetter = answer && answer.startsWith(currentLetter);
+                    gameData.players.forEach(playerScore => {
+                        const playerAnswersForThisRound = playerScore.roundAnswers ? playerScore.roundAnswers[currentRound - 1] : {};
+                        categories.forEach(category => {
+                            const answer = playerAnswersForThisRound[category] ? playerAnswersForThisRound[category].trim().toUpperCase() : '';
+                            if (answer) {
+                                if (!allRoundAnswers[category]) {
+                                    allRoundAnswers[category] = {};
+                                }
+                                if (!allRoundAnswers[category][answer]) {
+                                    allRoundAnswers[category][answer] = [];
+                                }
+                                allRoundAnswers[category][answer].push(playerScore.participantId);
+                            }
+                        });
+                    });
 
-                if (startsWithCorrectLetter) {
-                    // As per the requirement, any non-empty answer starting with the correct letter is valid.
-                    points = 10;
-                    status = '10 pts (Válido)'; // Status message for valid answers
-                } else {
-                    status = '0 pts (No comienza con la letra correcta o vacío)'; // Status message for invalid answers
-                }
-                roundScore += points;
-                roundSummary += `<p>${answer || 'Vacío'}: ${status}</p>`;
-            });
+                    // Step 2: Iterate through players and categories to calculate points based on new rules
+                    gameData.players.forEach(playerScore => {
+                        let playerRoundScore = 0;
 
-            scores[0].roundScores[currentRound - 1] = roundScore; // Store current round's score
-            scores[0].total += roundScore; // Add to total score
+                        categories.forEach(category => {
+                            const answer = (playerScore.roundAnswers && playerScore.roundAnswers[currentRound - 1] && playerScore.roundAnswers[currentRound - 1][category])
+                                ? playerScore.roundAnswers[currentRound - 1][category].trim().toUpperCase()
+                                : '';
+                            let points = 0;
 
-            // Show round results modal. If it's the last round, set button to trigger endGame.
-            showMessage(`Resultados Ronda ${currentRound}`, roundSummary, currentRound === totalRounds);
+                            const startsWithCorrectLetter = answer && answer.startsWith(currentLetter);
 
-            updateScoreboard(); // Update scoreboard with current round's score
+                            if (startsWithCorrectLetter) {
+                                const occurrences = allRoundAnswers[category] && allRoundAnswers[category][answer] ? allRoundAnswers[category][answer].length : 0;
+                                if (occurrences === 1) {
+                                    points = 100;
+                                } else if (occurrences > 1) {
+                                    points = 50;
+                                }
+                            }
+                            playerRoundScore += points;
+                        });
+                        playerScore.roundScores[currentRound - 1] = playerRoundScore;
+                        playerScore.total += playerRoundScore;
+                    });
+
+                    transaction.set(gameRef(), gameData); // Update game state with new scores
+                    // Show round results modal. If it's the last round, set button to trigger endGame.
+                    // MODIFIED: Only show "Ronda Terminada" message, not detailed scores here.
+                    showMessage(`Ronda ${currentRound} Terminada`, "La ronda ha terminado. Los puntos se han actualizado en el marcador.", currentRound === totalRounds);
+                });
+                // UI will be updated by the onSnapshot listener
+            } catch (error) {
+                console.error("Error calculating round scores:", error);
+                showMessage("Error", "No se pudieron calcular los puntos de la ronda. Por favor, inténtalo de nuevo.");
+            }
+        }
+
+        /**
+         * Resets the game UI and state to its initial conditions.
+         * This function now resets the Firestore game state.
+         */
+        async function resetGameUI() {
+            try {
+                await setDoc(gameRef(), {
+                    currentRound: 0,
+                    currentLetter: '?',
+                    gameStarted: false,
+                    roundActive: false,
+                    inputsFrozen: false,
+                    usedLetters: [],
+                    roundStartTime: 0,
+                    rouletteSpinning: false, // Reset roulette state
+                    players: scores.map(player => ({ // Reset player specific scores and answers
+                        ...player,
+                        total: 0,
+                        roundScores: Array(totalRounds).fill(0),
+                        timeTakenPerRound: Array(totalRounds).fill('00:00'),
+                        roundAnswers: Array(totalRounds).fill({})
+                    }))
+                });
+                // UI will be updated by the onSnapshot listener
+                hideModal(gameModal);
+                hideModal(rouletteModal); // Hide roulette modal on reset
+                hideModal(finalResultsModal);
+                // After reset, for the current user, show the name input modal again.
+                showModal(nameInputModal);
+                playerNameInput.value = ""; // Clear name input
+                nameInputErrorMessage.textContent = ""; // Clear error messages
+            } catch (error) {
+                console.error("Error resetting game:", error);
+                showMessage("Error", "No se pudo reiniciar el juego. Por favor, inténtalo de nuevo.");
+            }
         }
 
         /**
          * Ends the game, displays final results, and the DHL message.
          */
         function endGame() {
-            gameStarted = false;
+            gameStarted = false; // Local state update, Firestore will confirm
             stopBtn.disabled = true;
-            startRoundBtn.disabled = false; // Enable for a new game
-            restartBtn.disabled = false; // Enable restart button
+            startRoundBtn.disabled = false;
+            restartBtn.disabled = false;
 
-            const finalScore = scores[0].total;
             finalModalTitle.textContent = "¡Juego Terminado!";
-            finalModalScore.textContent = `Tu puntuación final es: ${finalScore} puntos.`;
-
+            let finalScoresHtml = '<h4>Puntuaciones Finales:</h4>';
             let roundTimesHtml = '<h4>Tiempos por Ronda:</h4>';
-            scores[0].timeTakenPerRound.forEach((time, index) => {
-                roundTimesHtml += `<p>Ronda ${index + 1}: ${time}</p>`;
+
+            // Sort players by total score (descending) for final display
+            const sortedScores = [...scores].sort((a, b) => b.total - a.total);
+
+            sortedScores.forEach(player => {
+                finalScoresHtml += `<p class="font-semibold">${player.name}: <span class="text-dhl-red">${player.total} puntos</span></p>`; // Only display name
             });
+
+            // Display time taken per round (assuming all players have the same time)
+            if (scores.length > 0) {
+                scores[0].timeTakenPerRound.forEach((time, index) => {
+                    roundTimesHtml += `<p>Ronda ${index + 1}: ${time}</p>`;
+                });
+            }
+
+            finalModalScore.innerHTML = finalScoresHtml;
             finalModalRoundTimes.innerHTML = roundTimesHtml;
 
             dhlTeamMessage.innerHTML = `En DHL, cada entrega es un esfuerzo de equipo. ¡Tu dedicación en este juego refleja el espíritu de excelencia que nos impulsa! ¡Gracias por ser parte de nuestro equipo!`;
@@ -661,19 +1060,14 @@
         }
 
         // --- Event Listeners ---
-        startRoundBtn.addEventListener('click', promptForLetter);
+        startRoundBtn.addEventListener('click', startRoulette); // Now starts the roulette
         stopBtn.addEventListener('click', stopGame);
         restartBtn.addEventListener('click', resetGameUI); // This button explicitly restarts the game
 
-        // The modalCloseBtn.addEventListener is now handled dynamically within showMessage.
-        // No need for a static listener here anymore.
-
         startGameBtnModal.addEventListener('click', startGame);
-        submitLetterBtn.addEventListener('click', submitLetter);
-        // finalModalCloseBtn listener is defined within endGame() for clarity of flow.
 
         // Initial setup
-        initializeGame();
+        initializeFirebase();
     </script>
 </body>
 </html>
